@@ -49,7 +49,7 @@ It originated from a branch of [Retrograde](https://github.com/retrograde/retrog
 ## Planned features
 
 - [ ] More shader options and presets
-- [ ] RetroAchievements integration
+- [ ] [RetroAchievements integration](docs/retroachievements-reference.md)
 - [ ] Additional app themes
 
 ## 🖼️ Custom thumbnails

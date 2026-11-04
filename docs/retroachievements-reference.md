@@ -100,6 +100,12 @@ RetroArch routes HTTP through asynchronous task callbacks. `cheevos/cheevos_clie
 
 The client retries leaderboard submissions immediately once and then with increasing delays up to a two-minute maximum (`deps/rcheevos/src/rc_client.c:5380-5446`). The start-session response also carries prior normal and hardcore unlock records (`deps/rcheevos/src/rapi/rc_api_user.c:103-220`), so a fresh session can reconcile state. The reviewed code does not establish a durable, app-level offline queue for every unlock; it schedules pending client work and can resync after reconnection. OMINOY should treat unlock delivery as at-least-once at the client boundary, persist only the minimum non-secret retry metadata if needed, and make failures visible without logging request bodies.
 
+### OMINOY ownership model for cancellation and retries
+
+The emulator session should own a `CoroutineScope` backed by a `SupervisorJob`. Game exit cancels that scope so frame-bound work cannot outlive the session. The emulation thread must never perform network I/O: it should publish unlock, progress, and error events to a `Channel`, while a coroutine drains the channel and invokes the client/network boundary.
+
+Before session cancellation completes, OMINOY should flush pending unlock work inside `withContext(NonCancellable)` so a last-second event is not discarded. Failed submissions should be persisted in a small non-secret queue and retried by WorkManager with a network constraint, allowing delivery to survive process death. Login and token validation belong to an application-scoped repository rather than the session scope, so a game exit cannot invalidate account state.
+
 ## RetroArch concept → OMINOY implementation
 
 | RetroArch concept | Verified file/function/lines | What OMINOY needs to implement |
@@ -161,9 +167,11 @@ onFrame():
 3. Integrate rcheevos login, game identification, and async HTTP using an OMINOY-owned task/coroutine bridge.
 4. Add exact GB/GBC/GBA ROM hashing and verify that known supported test ROMs resolve to a game set without recording credentials or request bodies.
 5. Add LibretroDroid/mGBA memory-map plumbing and a diagnostic-only validation that required memory regions are non-null and readable; remove diagnostic logging before release.
-6. Invoke the client once per emulated frame, then add unlock, progress, error, and reconnect UI.
-7. Enforce hardcore restrictions around every OMINOY feature that can alter emulation state, especially save states, rewind, cheats, and speed controls.
-8. Add retry/offline tests, token expiry tests, logout/deletion tests, process-death tests, and upgrade/migration tests for the secure store.
+6. Probe LibretroDroid’s native layer for `RETRO_ENVIRONMENT_SET_MEMORY_MAPS` and `retro_get_memory_data`. If memory maps do not cross the JNI boundary, add the smallest possible native/JNI read-at-address bridge rather than guessing at Kotlin-side addresses.
+7. Run an mGBA probe after game load. For GB/GBC, record the availability and size of work RAM, high RAM, and cartridge RAM. For GBA, record internal work RAM, external work RAM, and save RAM. Compare results with the rcheevos definitions cited above; do not proceed to achievement UI until required regions are readable.
+8. Invoke the client once per emulated frame, then add unlock, progress, error, and reconnect UI. Keep network work off the emulation thread and route events through a channel.
+9. Enforce hardcore restrictions around every OMINOY feature that can alter emulation state, especially save states, rewind, cheats, and speed controls.
+10. Add WorkManager retry tests, session-cancellation tests, last-frame flush tests, token expiry tests, logout/deletion tests, process-death tests, and upgrade/migration tests for the secure store.
 
 ## Licensing and attribution
 
@@ -171,9 +179,9 @@ RetroArch is GPLv3, and OMINOY is also GPLv3. This document intentionally paraph
 
 ## Open questions and verification items
 
-- **UNVERIFIED:** Which LibretroDroid version/API gives OMINOY the core’s `retro_get_memory_data`, `retro_get_memory_size`, or `retro_get_memory_map` equivalents, and whether those callbacks are available on the Android execution thread.
-- **UNVERIFIED:** Whether the exact mGBA binaries distributed by OMINOY expose every GB/GBC/GBA region expected by the current rcheevos console maps.
-- **UNVERIFIED:** Whether OMINOY’s chosen HTTP stack and coroutine lifecycle can cancel a game-load request safely when the activity or game session is destroyed.
+- **UNVERIFIED:** Whether the current LibretroDroid native sources handle `RETRO_ENVIRONMENT_SET_MEMORY_MAPS` and expose `retro_get_memory_data` through JNI. Settle this with a small source grep and, if needed, a minimal native/JNI probe.
+- **UNVERIFIED:** Whether the exact mGBA binaries distributed by OMINOY expose readable GB/GBC work RAM, high RAM, and cartridge RAM, plus GBA internal work RAM, external work RAM, and save RAM at the expected sizes. Settle this with a post-load probe and compare it with the rcheevos maps.
+- The proposed lifecycle is: application scope for login/token validation; emulator-session scope for frame work; WorkManager for persisted failed submissions under a network constraint. Validate the final choice against OMINOY’s existing ViewModel/service ownership before implementation.
 - **UNVERIFIED:** Whether an Android backup/migration policy should preserve the encrypted RetroAchievements session or require login again on a new installation.
 - RetroArch’s current source has a portable `retroarch-keychain.cfg` fallback; OMINOY should not copy that fallback unless there is a deliberate desktop-style portability requirement.
 

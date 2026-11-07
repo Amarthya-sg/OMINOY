@@ -1,10 +1,14 @@
 package come.asg.lemudroid.app.mobile.feature.home
 
 import android.Manifest
+import android.content.Context
+import android.graphics.Bitmap
+import android.graphics.drawable.BitmapDrawable
 import android.os.Build
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.ExperimentalFoundationApi
@@ -36,6 +40,7 @@ import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.foundation.gestures.snapping.rememberSnapFlingBehavior
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -81,13 +86,17 @@ import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.Lifecycle
+import androidx.core.graphics.drawable.toBitmap
 import coil.compose.AsyncImage
+import coil.imageLoader
+import coil.request.ImageRequest
 import come.asg.lemudroid.R
 import come.asg.lemudroid.app.mobile.feature.settings.retroachievements.RetroAchievementsAccountBridge
 import come.asg.lemudroid.app.mobile.feature.settings.retroachievements.readGameplayCredentials
@@ -104,7 +113,12 @@ import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.map
 import androidx.compose.runtime.snapshotFlow
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
+import kotlin.math.abs
+import kotlin.math.max
+import kotlin.math.min
 import java.util.Date
 import java.io.File
 
@@ -193,19 +207,69 @@ private fun HomeScreen(
         statsGame = game
         statsRefreshToken++
     }
+    var artworkColor by remember(selectedGame?.id) { mutableStateOf(fallbackArtworkColor(selectedGame)) }
+    val animatedArtworkColor by animateColorAsState(
+        targetValue = artworkColor,
+        animationSpec = tween(durationMillis = 720),
+        label = "artworkBackgroundColor",
+    )
+    val vibrantArtworkColor = energizeArtworkColor(animatedArtworkColor)
+    val artworkAccentColor = shiftArtworkHue(vibrantArtworkColor, 42f)
+
+    LaunchedEffect(selectedGame?.id, selectedGame?.displayCoverUrl()) {
+        val game = selectedGame ?: return@LaunchedEffect
+        val cover = game.displayCoverUrl()
+        artworkColor = if (cover == null) fallbackArtworkColor(game) else {
+            withContext(Dispatchers.IO) { loadArtworkColor(context, cover) } ?: fallbackArtworkColor(game)
+        }
+    }
+
     LaunchedEffect(carouselState, games) {
-        snapshotFlow { carouselState.firstVisibleItemIndex }
-            .map { games.getOrNull(it)?.id }
+        snapshotFlow {
+            val layoutInfo = carouselState.layoutInfo
+            val viewportCenter = layoutInfo.viewportSize.width / 2
+            layoutInfo.visibleItemsInfo
+                .minByOrNull { item -> abs(item.offset + item.size / 2 - viewportCenter) }
+                ?.index
+        }
+            .map { index -> index?.let { games.getOrNull(it)?.id } }
             .filterNotNull()
             .distinctUntilChanged()
             .collect { selectedGameId = it }
     }
 
-    Box(modifier = modifier.fillMaxSize().background(HomeColors.Background)) {
-        Box(Modifier.align(Alignment.TopStart).offset(x = (-140).dp, y = 40.dp).size(470.dp).blur(55.dp).background(Brush.radialGradient(listOf(HomeColors.PurpleGlow.copy(alpha = .58f), Color.Transparent))))
-        Box(Modifier.align(Alignment.TopEnd).offset(x = 160.dp, y = 190.dp).size(440.dp).blur(55.dp).background(Brush.radialGradient(listOf(HomeColors.TealGlow.copy(alpha = .6f), Color.Transparent))))
-        Box(Modifier.align(Alignment.Center).offset(x = (-20).dp, y = 340.dp).size(430.dp).blur(60.dp).background(Brush.radialGradient(listOf(HomeColors.RoseGlow.copy(alpha = .36f), Color.Transparent))))
-        Box(Modifier.fillMaxSize().background(Brush.verticalGradient(listOf(Color.Black.copy(alpha = .12f), Color.Black.copy(alpha = .54f), Color.Black))))
+    Box(modifier = modifier.fillMaxSize()) {
+        if (selectedGame != null) {
+            LemuroidGameImage(
+                game = selectedGame,
+                modifier = Modifier.fillMaxSize().blur(42.dp).graphicsLayer { alpha = 0.40f },
+            )
+        }
+        Box(
+            modifier = Modifier.fillMaxSize().background(
+                Brush.verticalGradient(
+                    listOf(
+                        vibrantArtworkColor.copy(alpha = 0.48f),
+                        artworkAccentColor.copy(alpha = 0.24f),
+                        MaterialTheme.colorScheme.background.copy(alpha = 0.88f),
+                        MaterialTheme.colorScheme.background,
+                    ),
+                ),
+            ),
+        )
+        Box(
+            modifier = Modifier.align(Alignment.TopCenter).fillMaxWidth().height(700.dp)
+                .background(
+                    Brush.radialGradient(
+                        colors = listOf(
+                            vibrantArtworkColor.copy(alpha = 0.42f),
+                            artworkAccentColor.copy(alpha = 0.18f),
+                            Color.Transparent,
+                        ),
+                        radius = 1050f,
+                    ),
+                ),
+        )
         Column(
             modifier = Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(bottom = 144.dp),
             verticalArrangement = Arrangement.spacedBy(14.dp),
@@ -279,50 +343,55 @@ private fun HomeScreen(
 
         if (selectedGame != null) {
             val coroutineScope = androidx.compose.runtime.rememberCoroutineScope()
-            LazyRow(
-                state = carouselState,
-                modifier = Modifier.fillMaxWidth(),
-                contentPadding = PaddingValues(horizontal = 56.dp),
-                horizontalArrangement = Arrangement.spacedBy(14.dp),
-            ) {
-                itemsIndexed(games, key = { _, game -> game.id }) { index, game ->
-                    val selected = selectedGame.id == game.id
-                    val scale by animateFloatAsState(if (selected) 1f else 0.92f, tween(240), label = "coverScale")
-                    val opacity by animateFloatAsState(if (selected) 1f else 0.76f, tween(240), label = "coverOpacity")
-                    Box(
-                        modifier = Modifier.width(250.dp).height(250.dp)
-                            .graphicsLayer { scaleX = scale; scaleY = scale; alpha = opacity }
-                            .clip(RoundedCornerShape(28.dp))
-                            .background(
-                                Brush.linearGradient(
-                                    listOf(Color(0xFF342A4A), Color(0xFF17131F), Color(0xFF271A29)),
+            BoxWithConstraints(modifier = Modifier.fillMaxWidth()) {
+                val sidePadding = ((maxWidth - 250.dp) / 2).coerceAtLeast(0.dp)
+                LazyRow(
+                    state = carouselState,
+                    flingBehavior = rememberSnapFlingBehavior(lazyListState = carouselState),
+                    modifier = Modifier.fillMaxWidth(),
+                    contentPadding = PaddingValues(horizontal = sidePadding),
+                    horizontalArrangement = Arrangement.spacedBy(14.dp),
+                ) {
+                    itemsIndexed(games, key = { _, game -> game.id }) { index, game ->
+                        val selected = selectedGame.id == game.id
+                        val scale by animateFloatAsState(if (selected) 1f else 0.92f, tween(240), label = "coverScale")
+                        val opacity by animateFloatAsState(if (selected) 1f else 0.76f, tween(240), label = "coverOpacity")
+                        Box(
+                            modifier = Modifier.width(250.dp).height(250.dp)
+                                .graphicsLayer { scaleX = scale; scaleY = scale; alpha = opacity }
+                                .clip(RoundedCornerShape(28.dp))
+                                .background(
+                                    Brush.linearGradient(
+                                        listOf(Color(0xFF342A4A), Color(0xFF17131F), Color(0xFF271A29)),
+                                    ),
+                                )
+                                .border(1.dp, Color.White.copy(alpha = 0.12f), RoundedCornerShape(28.dp))
+                                .combinedClickable(
+                                    onClick = {
+                                        selectedGameId = game.id
+                                        coroutineScope.launch { carouselState.animateScrollToItem(index) }
+                                        onGameClicked(game)
+                                    },
+                                    onLongClick = { onGameLongClick(game) },
                                 ),
-                            )
-                            .border(1.dp, Color.White.copy(alpha = 0.12f), RoundedCornerShape(28.dp))
-                            .combinedClickable(
-                                onClick = {
-                                    selectedGameId = game.id
-                                    coroutineScope.launch { carouselState.animateScrollToItem(index) }
-                                },
-                                onLongClick = { onGameLongClick(game) },
-                            ),
-                        contentAlignment = Alignment.Center,
-                    ) {
-                        LemuroidGameImage(
-                            game = game,
-                            modifier = Modifier.fillMaxSize().clip(RoundedCornerShape(28.dp)),
-                        )
-                        Surface(
-                            modifier = Modifier.align(Alignment.TopEnd).padding(8.dp),
-                            shape = CircleShape,
-                            color = Color.Black.copy(alpha = 0.52f),
+                            contentAlignment = Alignment.Center,
                         ) {
-                            IconButton(
-                                onClick = { openStats(game) },
-                                modifier = Modifier.size(38.dp),
-                                colors = IconButtonDefaults.iconButtonColors(contentColor = Color.White),
+                            LemuroidGameImage(
+                                game = game,
+                                modifier = Modifier.fillMaxSize().clip(RoundedCornerShape(28.dp)),
+                            )
+                            Surface(
+                                modifier = Modifier.align(Alignment.TopEnd).padding(8.dp),
+                                shape = CircleShape,
+                                color = Color.Black.copy(alpha = 0.52f),
                             ) {
-                                Icon(Icons.Filled.Info, contentDescription = "${game.displayName()} play statistics")
+                                IconButton(
+                                    onClick = { openStats(game) },
+                                    modifier = Modifier.size(38.dp),
+                                    colors = IconButtonDefaults.iconButtonColors(contentColor = Color.White),
+                                ) {
+                                    Icon(Icons.Filled.Info, contentDescription = "${game.displayName()} play statistics")
+                                }
                             }
                         }
                     }
@@ -724,3 +793,71 @@ private fun HomeNotification(
         }
     }
 }
+
+private fun energizeArtworkColor(color: Color): Color {
+    val hsv = FloatArray(3)
+    android.graphics.Color.colorToHSV(color.toArgb(), hsv)
+    hsv[1] = hsv[1].coerceIn(0.66f, 0.92f)
+    hsv[2] = hsv[2].coerceIn(0.74f, 0.96f)
+    return Color(android.graphics.Color.HSVToColor(hsv))
+}
+
+private fun shiftArtworkHue(
+    color: Color,
+    hueShift: Float,
+): Color {
+    val hsv = FloatArray(3)
+    android.graphics.Color.colorToHSV(color.toArgb(), hsv)
+    hsv[0] = (hsv[0] + hueShift) % 360f
+    hsv[1] = hsv[1].coerceIn(0.70f, 0.90f)
+    hsv[2] = hsv[2].coerceIn(0.78f, 0.94f)
+    return Color(android.graphics.Color.HSVToColor(hsv))
+}
+
+private fun fallbackArtworkColor(game: Game?): Color =
+    when (game?.systemId) {
+        "gba" -> Color(0xFF4658C7)
+        "gbc" -> Color(0xFF72A832)
+        "gb" -> Color(0xFF258F79)
+        "psp", "psx" -> Color(0xFF8B4BC1)
+        "n64", "ngc", "3ds" -> Color(0xFF2F829E)
+        else -> Color(0xFF51406F)
+    }
+
+private suspend fun loadArtworkColor(context: Context, coverUrl: String): Color? =
+    runCatching {
+        val request = ImageRequest.Builder(context).data(coverUrl).allowHardware(false).build()
+        val drawable = context.imageLoader.execute(request).drawable ?: return@runCatching null
+        val bitmap =
+            (drawable as? BitmapDrawable)?.bitmap
+                ?: drawable.toBitmap(width = 48, height = 48, config = Bitmap.Config.ARGB_8888)
+
+        var red = 0L
+        var green = 0L
+        var blue = 0L
+        var count = 0L
+        val stepX = max(1, bitmap.width / 10)
+        val stepY = max(1, bitmap.height / 10)
+        for (y in 0 until bitmap.height step stepY) {
+            for (x in 0 until bitmap.width step stepX) {
+                val pixel = bitmap.getPixel(x, y)
+                val alpha = android.graphics.Color.alpha(pixel)
+                val r = android.graphics.Color.red(pixel)
+                val g = android.graphics.Color.green(pixel)
+                val b = android.graphics.Color.blue(pixel)
+                val brightest = max(r, max(g, b))
+                val darkest = min(r, min(g, b))
+                if (alpha > 180 && brightest in 28..238 && brightest - darkest > 12) {
+                    red += r
+                    green += g
+                    blue += b
+                    count++
+                }
+            }
+        }
+        if (count == 0L) {
+            Color(0xFF51406F)
+        } else {
+            Color(android.graphics.Color.rgb((red / count).toInt(), (green / count).toInt(), (blue / count).toInt()))
+        }
+    }.getOrNull()

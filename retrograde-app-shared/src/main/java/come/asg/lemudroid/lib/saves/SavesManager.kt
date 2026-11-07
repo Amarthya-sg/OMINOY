@@ -40,6 +40,7 @@ class SavesManager(private val directoriesManager: DirectoriesManager) {
                 if (data.isEmpty()) return@runCatchingWithRetry
                 saveFile(game).writeBytesAtomic(data)
             }.getOrThrow()
+            directoriesManager.exportSelectedSaveFolder()
         }
     }
 

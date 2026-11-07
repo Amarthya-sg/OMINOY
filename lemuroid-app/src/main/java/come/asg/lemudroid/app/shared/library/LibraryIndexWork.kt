@@ -5,6 +5,7 @@ import androidx.work.CoroutineWorker
 import androidx.work.ListenableWorker
 import androidx.work.WorkerParameters
 import come.asg.lemudroid.app.mobile.shared.NotificationsManager
+import come.asg.lemudroid.app.shared.game.RetroAchievementsSyncWork
 import come.asg.lemudroid.app.utils.android.createSyncForegroundInfo
 import come.asg.lemudroid.lib.injection.AndroidWorkerInjection
 import come.asg.lemudroid.lib.injection.WorkerKey
@@ -49,6 +50,7 @@ class LibraryIndexWork(context: Context, workerParams: WorkerParameters) :
             // Dynamic/free builds download cores on demand. Start that work after
             // indexing so the first game launch does not usually pay the download cost.
             LibraryIndexScheduler.scheduleCoreUpdate(applicationContext)
+            RetroAchievementsSyncWork.enqueue(applicationContext)
         }
 
         return Result.success()

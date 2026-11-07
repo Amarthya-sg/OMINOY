@@ -5,6 +5,8 @@ import android.content.Context
 import android.content.Intent
 import android.net.Uri
 import android.os.Bundle
+import android.widget.Toast
+import androidx.documentfile.provider.DocumentFile
 import come.asg.lemudroid.R
 import come.asg.lemudroid.app.shared.library.LibraryIndexScheduler
 import come.asg.lemudroid.app.utils.android.displayErrorDialog
@@ -56,36 +58,49 @@ class StorageFrameworkPickerLauncher : RetrogradeActivity() {
             val currentValue: String? = sharedPreferences.getString(preferenceKey, null)
             val newValue = resultData?.data
 
-            if (newValue != null && newValue.toString() != currentValue) {
-                updatePersistableUris(newValue)
-
-                sharedPreferences.edit().apply {
-                    this.putString(preferenceKey, newValue.toString())
-                    this.apply()
+            if (newValue != null && saveSelection(newValue, resultData?.flags ?: 0, currentValue)) {
+                sharedPreferences.edit().putString(preferenceKey, newValue.toString()).apply()
+                if (newValue.toString() != currentValue) {
+                    LibraryIndexScheduler.scheduleLibrarySync(applicationContext)
                 }
+            } else if (newValue != null) {
+                Toast.makeText(this, "Could not access that folder. Please choose a readable ROM folder.", Toast.LENGTH_LONG).show()
             }
 
-            startLibraryIndexWork()
         }
         finish()
     }
 
-    private fun updatePersistableUris(uri: Uri) {
-        contentResolver.persistedUriPermissions
-            .filter { it.isReadPermission }
-            .filter { it.uri != uri }
-            .forEach {
-                contentResolver.releasePersistableUriPermission(
-                    it.uri,
-                    Intent.FLAG_GRANT_READ_URI_PERMISSION,
-                )
+    private fun saveSelection(uri: Uri, resultFlags: Int, previousValue: String?): Boolean {
+        val permissionFlags = resultFlags and
+            (Intent.FLAG_GRANT_READ_URI_PERMISSION or Intent.FLAG_GRANT_WRITE_URI_PERMISSION)
+        if (permissionFlags and Intent.FLAG_GRANT_READ_URI_PERMISSION == 0) return false
+
+        var tookGrant = false
+        return runCatching {
+            contentResolver.takePersistableUriPermission(uri, permissionFlags)
+            tookGrant = true
+            val folder = DocumentFile.fromTreeUri(this, uri) ?: error("Selected folder is unavailable")
+            require(folder.exists() && folder.isDirectory && folder.canRead())
+
+            if (previousValue != null && previousValue != uri.toString()) {
+                val previousUri = Uri.parse(previousValue)
+                contentResolver.persistedUriPermissions
+                    .firstOrNull { it.uri == previousUri }
+                    ?.let { permission ->
+                        var oldFlags = 0
+                        if (permission.isReadPermission) oldFlags = oldFlags or Intent.FLAG_GRANT_READ_URI_PERMISSION
+                        if (permission.isWritePermission) oldFlags = oldFlags or Intent.FLAG_GRANT_WRITE_URI_PERMISSION
+                        if (oldFlags != 0) contentResolver.releasePersistableUriPermission(previousUri, oldFlags)
+                    }
             }
-
-        contentResolver.takePersistableUriPermission(uri, Intent.FLAG_GRANT_READ_URI_PERMISSION)
-    }
-
-    private fun startLibraryIndexWork() {
-        LibraryIndexScheduler.scheduleLibrarySync(applicationContext)
+            true
+        }.getOrElse {
+            if (tookGrant && previousValue != uri.toString()) {
+                runCatching { contentResolver.releasePersistableUriPermission(uri, permissionFlags) }
+            }
+            false
+        }
     }
 
     companion object {

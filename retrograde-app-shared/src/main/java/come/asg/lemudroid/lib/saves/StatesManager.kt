@@ -36,6 +36,7 @@ class StatesManager(private val directoriesManager: DirectoriesManager) {
         require(index in 0 until MAX_STATES) { "State slot index must be in 0 until $MAX_STATES" }
         migrateLegacyFiles(game, coreID)
         writeSaveState(stateFile(game, coreID, index), metadataFile(game, coreID, index), saveState)
+        directoriesManager.exportSelectedSaveFolder()
     }
 
     suspend fun getAutoSaveInfo(
@@ -64,6 +65,7 @@ class StatesManager(private val directoriesManager: DirectoriesManager) {
     ) = withContext(Dispatchers.IO) {
         migrateLegacyFiles(game, coreID)
         writeSaveState(stateFile(game, coreID, AUTO_SLOT), metadataFile(game, coreID, AUTO_SLOT), saveState)
+        directoriesManager.exportSelectedSaveFolder()
     }
 
     suspend fun getSavedSlotsInfo(

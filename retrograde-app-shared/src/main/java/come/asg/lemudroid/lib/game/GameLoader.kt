@@ -98,6 +98,9 @@ class GameLoader(
                     throw GameLoaderException(GameLoaderError.MissingBiosFiles(missingBiosFiles))
                 }
 
+                runCatching { directoriesManager.importSelectedSaveFolder() }
+                    .onFailure { Timber.w(it, "Could not import selected SAF save folder; using local saves") }
+
                 val gameFiles =
                     runCatching {
                         val useVFS = systemCoreConfig.supportsLibretroVFS && directLoad

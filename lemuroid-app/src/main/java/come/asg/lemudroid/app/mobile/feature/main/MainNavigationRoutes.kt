@@ -136,6 +136,12 @@ enum class MainRoute(
         parent = SETTINGS,
         showBottomNavigation = false,
     ),
+    SETTINGS_RETROACHIEVEMENTS(
+        route = "settings/retroachievements",
+        titleId = R.string.settings_title_retroachievements,
+        parent = SETTINGS,
+        showBottomNavigation = false,
+    ),
     ;
 
     val root = root()

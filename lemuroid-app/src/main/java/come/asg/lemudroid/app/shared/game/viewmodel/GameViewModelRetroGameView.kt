@@ -16,6 +16,8 @@ import come.asg.lemudroid.BuildConfig
 import come.asg.lemudroid.R
 import come.asg.lemudroid.app.mobile.feature.settings.SettingsManager
 import come.asg.lemudroid.app.shared.game.ShaderChooser
+import come.asg.lemudroid.app.shared.game.RetroAchievementsGameState
+import come.asg.lemudroid.app.shared.game.RetroAchievementsSession
 import come.asg.lemudroid.app.shared.rumble.RumbleManager
 import come.asg.lemudroid.app.shared.settings.HDModeQuality
 import come.asg.lemudroid.common.coroutines.MutableStateProperty
@@ -28,6 +30,7 @@ import come.asg.lemudroid.lib.game.GameLoaderError
 import come.asg.lemudroid.lib.game.GameLoaderException
 import come.asg.lemudroid.lib.library.GameSystem
 import come.asg.lemudroid.lib.library.SystemCoreConfig
+import come.asg.lemudroid.lib.library.SystemID
 import come.asg.lemudroid.lib.library.db.entity.Game
 import come.asg.lemudroid.lib.storage.RomFiles
 import kotlinx.coroutines.CoroutineScope
@@ -36,6 +39,7 @@ import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.filterIsInstance
@@ -57,6 +61,10 @@ class GameViewModelRetroGameView(
     private val rumbleManager: RumbleManager,
     private val scope: CoroutineScope,
 ) : DefaultLifecycleObserver {
+    private val retroAchievementsSession = RetroAchievementsSession(scope)
+    val retroAchievementsState: StateFlow<RetroAchievementsGameState> = retroAchievementsSession.state
+    val retroAchievementPopup = retroAchievementsSession.achievementPopup
+
     sealed interface GameState {
         data object Uninitialized : GameState
 
@@ -180,9 +188,38 @@ class GameViewModelRetroGameView(
             runCatching {
                 printRetroVariables(result)
             }
+
+            val raConsoleId = currentState.retroViewData.retroAchievementsConsoleId
+            if (raConsoleId != 0) {
+                scope.launch {
+                    runCatching {
+                        result.getGLRetroEvents()
+                            .filterIsInstance<GLRetroView.GLRetroEvents.FrameRendered>()
+                            .first()
+                        val diagnostic = "RA_MEMORY_SPIKE ${result.getRaMemoryDiagnostics()}"
+                        Timber.i("%s", diagnostic)
+                        come.asg.lemudroid.app.shared.settings.SaveDiagnosticsLogger.append(
+                            appContext,
+                            system.libretroFullName,
+                            diagnostic,
+                        )
+                    }.onFailure {
+                        Timber.w(it, "RA memory-map spike diagnostic failed")
+                    }
+                }
+            }
         }
 
         retroGameViewFlow.value = result
+        val romPath = (currentState.gameData.gameFiles as? RomFiles.Standard)
+            ?.files?.firstOrNull()?.absolutePath
+        retroAchievementsSession.start(
+            appContext,
+            currentState.retroViewData.retroAchievementsConsoleId,
+            romPath,
+            result,
+            currentState.gameData.game.id,
+        )
         gameState.value = GameState.Ready
 
         return currentState.gameData to result
@@ -219,6 +256,13 @@ class GameViewModelRetroGameView(
     ): GLRetroViewData {
         return GLRetroViewData(appContext).apply {
             coreFilePath = gameData.coreLibrary
+            retroAchievementsConsoleId =
+                when (system.id) {
+                    SystemID.GB -> 4
+                    SystemID.GBA -> 5
+                    SystemID.GBC -> 6
+                    else -> 0
+                }
 
             when (val gameFiles = gameData.gameFiles) {
                 is RomFiles.Standard -> {
@@ -302,6 +346,11 @@ class GameViewModelRetroGameView(
         owner.launchOnState(Lifecycle.State.RESUMED) {
             initializeRumbleFlow()
         }
+    }
+
+    override fun onDestroy(owner: LifecycleOwner) {
+        retroAchievementsSession.stop()
+        super.onDestroy(owner)
     }
 
     private suspend fun initializeCoreVariablesFlow() {

@@ -20,9 +20,9 @@ plugins {
 
 android {
     defaultConfig {
-        versionCode = 252
-        versionName = "1.17.0" // Always remember to update Cores Tag!
-        applicationId = "come.asg.lemudroid"
+        versionCode = 255
+        versionName = "1.18.0" // Always remember to update Cores Tag!
+        applicationId = "com.asg.lemuroid"
     }
     flavorDimensions += listOf("opensource", "cores")
 
@@ -218,7 +218,7 @@ dependencies {
     implementation(deps.libs.composeSettings.diskStorage)
     implementation(deps.libs.composeSettings.memoryStorage)
 
-    implementation(deps.libs.libretrodroid)
+    implementation(project(":libretrodroid"))
 
     // Uncomment this when using a local aar file.
     // implementation(fileTree(mapOf("dir" to "libs", "include" to listOf("*.jar", "*.aar"))))

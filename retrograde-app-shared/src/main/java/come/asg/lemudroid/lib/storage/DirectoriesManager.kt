@@ -10,9 +10,21 @@ import come.asg.lemudroid.lib.preferences.SharedPreferencesHelper
 import java.io.File
 
 class DirectoriesManager(private val appContext: Context) {
+    private val saveFolderMirror by lazy { SaveFolderMirror(appContext, this) }
     private val legacyPreferences: SharedPreferences by lazy {
         SharedPreferencesHelper.getLegacySharedPreferences(appContext)
     }
+
+    /** Imports the selected SAF save folder into path-based working storage before a game starts. */
+    suspend fun importSelectedSaveFolder() = saveFolderMirror.importToLocal()
+
+    /** Exports SRAM and save states to the selected SAF folder after local writes are complete. */
+    suspend fun exportSelectedSaveFolder() = saveFolderMirror.exportToSaf()
+
+    /** Copies existing local save files into the selected tree without replacing destination files. */
+    suspend fun copyExistingSavesToSelectedFolder() = saveFolderMirror.copyExistingToSafWithoutOverwriting()
+
+    suspend fun exportAchievementsToSelectedDataFolder() = saveFolderMirror.exportAchievementsToDataFolder()
 
     /** The SAF-selected data root when it is addressable as a normal primary-storage path. */
     fun getSelectedDataDirectory(): File? {
@@ -57,6 +69,9 @@ class DirectoriesManager(private val appContext: Context) {
 
     fun getSavesDirectory(): File =
         getSelectedDataSubdirectory("saves")
+
+    fun getAchievementsDirectory(): File =
+        getSelectedDataSubdirectory("achievements")
 
     fun getInternalRomsDirectory(): File =
         getSelectedDataSubdirectory("roms")

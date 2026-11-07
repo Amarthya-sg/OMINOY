@@ -87,6 +87,8 @@
 
     <string name="settings_title_advanced_settings">Advanced settings</string>
     <string name="settings_description_advanced_settings">Display advanced settings</string>
+    <string name="settings_title_retroachievements">RetroAchievements</string>
+    <string name="settings_description_retroachievements">Sign in and view your achievement profile</string>
     <string name="settings_title_low_latency_audio">Prefer low-latency audio</string>
     <string name="settings_description_low_latency_audio">Reduce audio latency on supported devices. Might increase audio glitches.</string>
 
@@ -295,6 +297,10 @@
     <string name="tilt_configuration_buttons_l1_r1">L1 - R1</string>
     <string name="tilt_configuration_buttons_l2_r2">L2 - R2</string>
 
+    <string name="settings_title_save_folder">Save folder</string>
+    <string name="settings_save_folder_default">Default</string>
+    <string name="settings_reset_save_folder">Reset save folder</string>
+    <string name="settings_save_folder_unavailable">That folder could not be accessed. Choose another folder or keep using the default.</string>
     <string name="settings_title_data_folder">OMINOY data folder</string>
     <string name="settings_description_data_folder">Choose where ROMs, saves, save states, and state previews are stored. Custom shared folders need All files access.</string>
     <string name="data_folder_access_title">Allow access to manage files?</string>
@@ -310,7 +316,6 @@
     <string name="touch_editor_close">Close editor</string>
     <string name="touch_editor_reset_layout">Reset layout</string>
     <string name="touch_editor_save_layout">Save layout</string>
-    <string name="touch_editor_changes_saved">Changes saved</string>
     <string name="touch_editor_select_hint">Tap to select · drag to move</string>
     <string name="touch_editor_reset_orientation_title">Reset %1$s layout?</string>
     <string name="touch_editor_reset_orientation_message">This resets only this console\'s %1$s touch layout.</string>

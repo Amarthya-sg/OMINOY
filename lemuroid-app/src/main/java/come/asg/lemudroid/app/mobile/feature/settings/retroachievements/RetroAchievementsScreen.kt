@@ -929,10 +929,16 @@ fun RetroAchievementsScreen(modifier: Modifier = Modifier, viewModel: RetroAchie
             }
         }
     }
-    if (showGames) Dialog(onDismissRequest = { showGames = false }, properties = DialogProperties(usePlatformDefaultWidth = false)) {
+    if (showGames) Dialog(
+        onDismissRequest = { showGames = false },
+        properties = DialogProperties(usePlatformDefaultWidth = false, decorFitsSystemWindows = false),
+    ) {
         GamesOverlay(games, onBack = { showGames = false }, onGame = { selectedGameId = it; showGames = false })
     }
-    if (selectedGame != null) Dialog(onDismissRequest = { selectedGameId = null }, properties = DialogProperties(usePlatformDefaultWidth = false)) {
+    if (selectedGame != null) Dialog(
+        onDismissRequest = { selectedGameId = null },
+        properties = DialogProperties(usePlatformDefaultWidth = false, decorFitsSystemWindows = false),
+    ) {
         GameDetailOverlay(selectedGame!!, onBack = { selectedGameId = null }, onAchievement = { selectedAchievement = selectedGame!!.title to it })
     }
     if (selectedAchievement != null) AchievementDetailOverlay(

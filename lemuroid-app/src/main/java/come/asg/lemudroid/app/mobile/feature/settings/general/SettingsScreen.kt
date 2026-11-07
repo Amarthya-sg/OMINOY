@@ -170,8 +170,19 @@ private fun SettingsFeatureCard(title: String, subtitle: String, connected: Bool
         Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp)) {
             Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(7.dp)) {
                 Text(title, color = HomeColors.Text, fontSize = 16.sp, fontWeight = FontWeight.ExtraBold)
-                if (connected) Surface(shape = RoundedCornerShape(99.dp), color = HomeColors.Mint.copy(alpha = .15f)) {
-                    Text("LINKED", color = HomeColors.Mint, fontSize = 8.sp, fontWeight = FontWeight.Black, letterSpacing = .6.sp, modifier = Modifier.padding(horizontal = 7.dp, vertical = 4.dp))
+            }
+            if (connected) {
+                Surface(shape = RoundedCornerShape(99.dp), color = HomeColors.Mint.copy(alpha = .15f)) {
+                    Text(
+                        "LINKED",
+                        color = HomeColors.Mint,
+                        fontSize = 8.sp,
+                        fontWeight = FontWeight.Black,
+                        letterSpacing = .6.sp,
+                        maxLines = 1,
+                        softWrap = false,
+                        modifier = Modifier.padding(horizontal = 7.dp, vertical = 4.dp),
+                    )
                 }
             }
             Text(subtitle, color = HomeColors.Text.copy(alpha = .78f), fontSize = 12.sp, lineHeight = 16.sp)

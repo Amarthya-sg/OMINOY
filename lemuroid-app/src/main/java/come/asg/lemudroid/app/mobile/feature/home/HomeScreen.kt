@@ -27,6 +27,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.size
@@ -515,7 +516,7 @@ private fun HomeScreen(
     }
 }
 
-private fun Game.matchesCachedAchievementTitle(cachedTitle: String): Boolean {
+fun Game.matchesCachedAchievementTitle(cachedTitle: String): Boolean {
     val localNames = listOf(title, displayName(), fileName.substringBeforeLast('.', fileName))
         .map(::normalizeHomeGameTitle)
         .filter { it.length >= 4 }
@@ -547,7 +548,7 @@ private fun normalizeHomeGameTitle(value: String): String {
 }
 
 @Composable
-private fun HomeGameStatsDialog(
+fun HomeGameStatsDialog(
     game: Game,
     played: String,
     sessions: Int,
@@ -560,20 +561,21 @@ private fun HomeGameStatsDialog(
     val earned = achievements.filter { it.earned }
     val pending = achievements.filterNot { it.earned }
     val progress = if (achievements.isNotEmpty()) earned.size.toFloat() / achievements.size else 0f
-    Dialog(onDismissRequest = onClose, properties = DialogProperties(usePlatformDefaultWidth = false)) {
+    Dialog(onDismissRequest = onClose, properties = DialogProperties(usePlatformDefaultWidth = false, decorFitsSystemWindows = false)) {
         BoxWithConstraints(
             Modifier.fillMaxSize().background(Color.Black.copy(alpha = .72f)).pointerInput(onClose) { detectTapGestures(onTap = { onClose() }) },
-            contentAlignment = Alignment.Center,
+            contentAlignment = Alignment.BottomCenter,
         ) {
             val interaction = remember { MutableInteractionSource() }
             Column(
-                Modifier.align(Alignment.Center).fillMaxWidth(.94f).widthIn(max = 440.dp)
-                    .heightIn(max = maxHeight * .86f)
-                    .clip(RoundedCornerShape(30.dp)).background(HomeColors.CardVariant)
+                Modifier.align(Alignment.BottomCenter).fillMaxWidth(.96f).widthIn(max = 520.dp)
+                    .heightIn(max = maxHeight * .9f)
+                    .clip(RoundedCornerShape(topStart = 30.dp, topEnd = 30.dp)).background(HomeColors.CardVariant)
                     .clickable(interactionSource = interaction, indication = null) { }
-                    .verticalScroll(rememberScrollState()).padding(18.dp),
+                    .verticalScroll(rememberScrollState()).navigationBarsPadding().padding(horizontal = 18.dp, vertical = 16.dp),
                 verticalArrangement = Arrangement.spacedBy(12.dp),
             ) {
+                Box(Modifier.align(Alignment.CenterHorizontally).width(42.dp).height(4.dp).clip(CircleShape).background(Color.White.copy(alpha = .22f)))
                 Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                     Box(Modifier.size(60.dp).clip(RoundedCornerShape(18.dp)).background(HomeColors.Surface)) {
                         LemuroidGameImage(game = game, modifier = Modifier.fillMaxSize())
@@ -666,7 +668,7 @@ private fun HomeAchievementGroup(
 }
 
 @Composable
-private fun HomeAchievementDetailDialog(
+fun HomeAchievementDetailDialog(
     game: Game,
     achievement: RetroAchievementsEarnedStore.Achievement,
     onClose: () -> Unit,

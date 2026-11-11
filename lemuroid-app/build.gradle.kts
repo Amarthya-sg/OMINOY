@@ -20,9 +20,9 @@ plugins {
 
 android {
     defaultConfig {
-        versionCode = 252
-        versionName = "1.17.0" // Always remember to update Cores Tag!
-        applicationId = "come.asg.lemudroid"
+        versionCode = 255
+        versionName = "1.18.0" // Always remember to update Cores Tag!
+        applicationId = "com.asg.lemuroid"
     }
     flavorDimensions += listOf("opensource", "cores")
 
@@ -30,26 +30,7 @@ android {
         println("Building Google Play version. Bundling dynamic features.")
         dynamicFeatures.addAll(
             setOf(
-                ":lemuroid_core_desmume",
-                ":lemuroid_core_dosbox_pure",
-                ":lemuroid_core_fbneo",
-                ":lemuroid_core_fceumm",
-                ":lemuroid_core_gambatte",
-                ":lemuroid_core_genesis_plus_gx",
-                ":lemuroid_core_handy",
-                ":lemuroid_core_mame2003_plus",
-                ":lemuroid_core_mednafen_ngp",
-                ":lemuroid_core_mednafen_pce_fast",
-                ":lemuroid_core_mednafen_wswan",
-                ":lemuroid_core_melonds",
                 ":lemuroid_core_mgba",
-                ":lemuroid_core_mupen64plus_next_gles3",
-                ":lemuroid_core_pcsx_rearmed",
-                ":lemuroid_core_ppsspp",
-                ":lemuroid_core_prosystem",
-                ":lemuroid_core_snes9x",
-                ":lemuroid_core_stella",
-                ":lemuroid_core_citra",
             ),
         )
     }
@@ -218,7 +199,7 @@ dependencies {
     implementation(deps.libs.composeSettings.diskStorage)
     implementation(deps.libs.composeSettings.memoryStorage)
 
-    implementation(deps.libs.libretrodroid)
+    implementation(project(":libretrodroid"))
 
     // Uncomment this when using a local aar file.
     // implementation(fileTree(mapOf("dir" to "libs", "include" to listOf("*.jar", "*.aar"))))

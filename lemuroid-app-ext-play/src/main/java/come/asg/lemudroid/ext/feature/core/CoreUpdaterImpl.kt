@@ -32,6 +32,14 @@ class CoreUpdaterImpl(
 ) : CoreUpdater {
     private val api = retrofit.create(CoreUpdater.CoreManagerApi::class.java)
 
+    override suspend fun isCoreInstalled(
+        context: Context,
+        coreID: CoreID,
+    ): Boolean {
+        val installManager = SplitInstallManagerFactory.create(context)
+        return computePlayModuleName(coreID) in installManager.installedModules
+    }
+
     override suspend fun downloadCores(
         context: Context,
         coreIDs: List<CoreID>,

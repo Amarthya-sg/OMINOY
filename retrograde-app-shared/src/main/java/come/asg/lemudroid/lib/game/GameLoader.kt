@@ -82,14 +82,14 @@ class GameLoader(
                     throw GameLoaderException(GameLoaderError.UnsupportedArchitecture)
                 }
 
-                // Dynamic/free builds do not package emulator binaries in the APK.
-                // Ensure the selected core is present before GameLoader searches app storage.
-                coreUpdater.downloadCores(appContext, listOf(systemCoreConfig.coreID))
-
-                val coreLibrary =
-                    findLibrary(appContext, systemCoreConfig.coreID)
-                        ?.absolutePath
-                        ?: throw GameLoaderException(GameLoaderError.LoadCore)
+                // Startup owns installation. Do not request a download for every game
+                // launch; the updater performs the build-specific readiness check.
+                if (!coreUpdater.isCoreInstalled(appContext, systemCoreConfig.coreID)) {
+                    coreUpdater.downloadCores(appContext, listOf(systemCoreConfig.coreID))
+                }
+                val coreFile = findLibrary(appContext, systemCoreConfig.coreID)
+                val coreLibrary = coreFile?.absolutePath
+                    ?: throw GameLoaderException(GameLoaderError.LoadCore)
 
                 emit(LoadingState.LoadingGame)
 
@@ -97,6 +97,9 @@ class GameLoader(
                 if (missingBiosFiles.isNotEmpty()) {
                     throw GameLoaderException(GameLoaderError.MissingBiosFiles(missingBiosFiles))
                 }
+
+                runCatching { directoriesManager.importSelectedSaveFolder() }
+                    .onFailure { Timber.w(it, "Could not import selected SAF save folder; using local saves") }
 
                 val gameFiles =
                     runCatching {

@@ -3,4 +3,6 @@
     <exclude domain="database" path="." />
     <exclude domain="sharedpref" path="." />
     <exclude domain="file" path="cores" />
+    <exclude domain="file" path="ra_offline_spike.bin" />
+    <exclude domain="file" path="retro-achievements-pending.bin" />
 </full-backup-content>

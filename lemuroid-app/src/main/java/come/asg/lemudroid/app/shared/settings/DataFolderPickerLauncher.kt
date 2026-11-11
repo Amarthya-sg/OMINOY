@@ -10,7 +10,6 @@ import android.os.Bundle
 import android.os.Environment
 import android.provider.Settings
 import androidx.documentfile.provider.DocumentFile
-import come.asg.lemudroid.app.shared.library.LibraryIndexScheduler
 import come.asg.lemudroid.app.utils.android.displayErrorDialog
 import come.asg.lemudroid.R
 import come.asg.lemudroid.lib.android.RetrogradeActivity
@@ -111,7 +110,7 @@ class DataFolderPickerLauncher : RetrogradeActivity() {
         preferences.edit().putString(getString(LibR.string.pref_key_app_data_folder), uri.toString()).apply()
 
         DocumentFile.fromTreeUri(this, uri)?.let { root ->
-            listOf("roms", "saves", "states", "state-previews").forEach { name ->
+            listOf("roms", "saves", "states", "state-previews", "achievements").forEach { name ->
                 if (root.findFile(name) == null) root.createDirectory(name)
             }
         }
@@ -123,7 +122,6 @@ class DataFolderPickerLauncher : RetrogradeActivity() {
             }
         }
 
-        LibraryIndexScheduler.scheduleLibrarySync(applicationContext)
     }
 
     private fun resultFlags(): Int =

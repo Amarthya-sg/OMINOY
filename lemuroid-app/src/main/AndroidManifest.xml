@@ -30,6 +30,7 @@
     <application
         android:name="come.asg.lemudroid.app.LemuroidApplication"
         android:allowBackup="true"
+        android:hasFragileUserData="true"
         android:fullBackupContent="@xml/backup_rules"
         android:dataExtractionRules="@xml/data_extraction_rules"
         android:banner="@mipmap/ic_banner"
@@ -101,6 +102,9 @@
         <activity
             android:name="come.asg.lemudroid.app.shared.settings.DataFolderPickerLauncher"
             android:theme="@style/LemuroidMaterialTheme.Invisible" />
+        <activity
+            android:name="come.asg.lemudroid.app.shared.settings.SaveFolderPickerLauncher"
+            android:theme="@style/LemuroidMaterialTheme.Invisible" />
 
         <!-- Leanback activities -->
         <activity
@@ -156,6 +160,8 @@
 
         <receiver android:name=".app.shared.library.LibraryIndexBroadcastReceiver" />
         <receiver android:name=".app.shared.library.CoreUpdateBroadcastReceiver" />
+        <receiver android:name=".app.shared.game.RetroAchievementsSyncCancelReceiver" />
+        <receiver android:name=".app.shared.game.RetroAchievementsPendingUploadReceiver" />
 
         <provider
             android:name="androidx.startup.InitializationProvider"

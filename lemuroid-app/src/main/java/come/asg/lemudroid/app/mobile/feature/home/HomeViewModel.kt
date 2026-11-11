@@ -30,11 +30,12 @@ import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 @OptIn(FlowPreview::class)
 class HomeViewModel(
     appContext: Context,
-    retrogradeDb: RetrogradeDatabase,
+    private val retrogradeDb: RetrogradeDatabase,
     private val coresSelection: CoresSelection,
 ) : ViewModel() {
     companion object {
@@ -72,6 +73,8 @@ class HomeViewModel(
     fun getViewStates(): Flow<UIState> {
         return uiStates
     }
+
+    suspend fun loadAllGames(): List<Game> = withContext(Dispatchers.IO) { retrogradeDb.gameDao().selectAll() }
 
     fun changeLocalStorageFolder(context: Context) {
         StorageFrameworkPickerLauncher.pickFolder(context)

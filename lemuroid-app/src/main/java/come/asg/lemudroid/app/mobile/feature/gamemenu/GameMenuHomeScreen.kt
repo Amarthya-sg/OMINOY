@@ -1,18 +1,28 @@
 package come.asg.lemudroid.app.mobile.feature.gamemenu
 
 import android.content.Intent
+import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ColumnScope
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Sensors
 import androidx.compose.material.icons.filled.Code
+import androidx.compose.material.icons.filled.EmojiEvents
+import androidx.compose.material.icons.filled.Sensors
 import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import com.alorma.compose.settings.storage.memory.rememberMemoryBooleanSettingState
 import com.alorma.compose.settings.storage.memory.rememberMemoryIntSettingState
@@ -30,171 +40,143 @@ fun GameMenuHomeScreen(
     gameMenuRequest: GameMenuActivity.GameMenuRequest,
     onResult: KFunction1<Intent.() -> Unit, Unit>,
 ) {
-    Column(modifier = Modifier.verticalScroll(rememberScrollState())) {
-        if (gameMenuRequest.coreConfig.statesSupported) {
-            LemuroidSettingsMenuLink(
-                title = { Text(text = stringResource(id = R.string.game_menu_save)) },
-                icon = {
-                    Icon(
-                        painterResource(R.drawable.ic_menu_save),
-                        contentDescription = stringResource(id = R.string.game_menu_save),
-                    )
-                },
-                onClick = { navController.navigateToRoute(GameMenuRoute.SAVE) },
-            )
-
-            LemuroidSettingsMenuLink(
-                title = { Text(text = stringResource(id = R.string.game_menu_load)) },
-                icon = {
-                    Icon(
-                        painterResource(R.drawable.ic_menu_load),
-                        contentDescription = stringResource(id = R.string.game_menu_load),
-                    )
-                },
-                onClick = { navController.navigateToRoute(GameMenuRoute.LOAD) },
-            )
-        }
-
-        LemuroidSettingsMenuLink(
-            title = { Text(text = stringResource(id = R.string.game_menu_quit)) },
-            icon = {
-                Icon(
-                    painterResource(R.drawable.ic_menu_quit),
-                    contentDescription = stringResource(id = R.string.game_menu_quit),
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .verticalScroll(rememberScrollState())
+            .padding(horizontal = 12.dp, vertical = 12.dp),
+        verticalArrangement = Arrangement.spacedBy(12.dp),
+    ) {
+        MenuSection(title = stringResource(R.string.game_menu_section_progress)) {
+            if (gameMenuRequest.coreConfig.statesSupported) {
+                LemuroidSettingsMenuLink(
+                    title = { Text(stringResource(R.string.game_menu_save)) },
+                    icon = { MenuIcon(painterResource(R.drawable.ic_menu_save), R.string.game_menu_save) },
+                    onClick = { navController.navigateToRoute(GameMenuRoute.SAVE) },
                 )
-            },
-            onClick = {
-                onResult { putExtra(GameMenuContract.RESULT_QUIT, true) }
-            },
-        )
-
-        LemuroidSettingsMenuLink(
-            title = { Text(text = stringResource(id = R.string.game_menu_restart)) },
-            icon = {
-                Icon(
-                    painterResource(R.drawable.ic_menu_restart),
-                    contentDescription = stringResource(id = R.string.game_menu_restart),
+                LemuroidSettingsMenuLink(
+                    title = { Text(stringResource(R.string.game_menu_load)) },
+                    icon = { MenuIcon(painterResource(R.drawable.ic_menu_load), R.string.game_menu_load) },
+                    onClick = { navController.navigateToRoute(GameMenuRoute.LOAD) },
                 )
-            },
-            onClick = {
-                onResult { putExtra(GameMenuContract.RESULT_RESET, true) }
-            },
-        )
-
-        LemuroidSettingsSwitch(
-            title = { Text(text = stringResource(id = R.string.game_menu_mute_audio)) },
-            icon = {
-                Icon(
-                    painterResource(R.drawable.ic_menu_mute),
-                    contentDescription = stringResource(id = R.string.game_menu_mute_audio),
-                )
-            },
-            state = rememberMemoryBooleanSettingState(!gameMenuRequest.audioEnabled),
-            onCheckedChange = {
-                onResult { putExtra(GameMenuContract.RESULT_ENABLE_AUDIO, !it) }
-            },
-        )
-
-        if (gameMenuRequest.fastForwardSupported) {
-            LemuroidSettingsSwitch(
-                title = { Text(text = stringResource(id = R.string.game_menu_fast_forward)) },
-                icon = {
-                    Icon(
-                        painterResource(R.drawable.ic_menu_fast_forward),
-                        contentDescription = stringResource(id = R.string.game_menu_fast_forward),
-                    )
-                },
-                state = rememberMemoryBooleanSettingState(gameMenuRequest.fastForwardEnabled),
-                onCheckedChange = {
-                    onResult { putExtra(GameMenuContract.RESULT_ENABLE_FAST_FORWARD, it) }
-                },
-            )
-        }
-
-        if (gameMenuRequest.numDisks > 1) {
-            LemuroidSettingsList(
-                title = { Text(text = stringResource(id = R.string.game_menu_change_disk_button)) },
-                items = (1..gameMenuRequest.numDisks).map { stringResource(R.string.game_menu_change_disk_disk, it) },
-                useSelectedValueAsSubtitle = false,
-                icon = {
-                    Icon(
-                        painterResource(R.drawable.ic_menu_disk),
-                        contentDescription = stringResource(id = R.string.game_menu_change_disk_button),
-                    )
-                },
-                state = rememberMemoryIntSettingState(gameMenuRequest.currentDisk),
-                onItemSelected = { index, _ ->
-                    onResult { putExtra(GameMenuContract.RESULT_CHANGE_DISK, index) }
-                },
-            )
-        }
-
-        LemuroidSettingsMenuLink(
-            title = { Text(text = stringResource(id = R.string.game_menu_edit_touch_controls)) },
-            icon = {
-                Icon(
-                    painterResource(R.drawable.ic_menu_controls),
-                    contentDescription = stringResource(id = R.string.game_menu_edit_touch_controls),
-                )
-            },
-            onClick = {
-                onResult { putExtra(GameMenuContract.RESULT_EDIT_TOUCH_CONTROLS, true) }
-            },
-        )
-
-        LemuroidSettingsMenuLink(
-            title = { Text(text = stringResource(id = R.string.game_menu_cheats)) },
-            icon = {
-                Icon(
-                    imageVector = Icons.Default.Code,
-                    contentDescription = stringResource(id = R.string.game_menu_cheats),
-                )
-            },
-            onClick = { navController.navigateToRoute(GameMenuRoute.CHEATS) },
-        )
-
-        if (gameMenuRequest.advancedCoreOptions.isNotEmpty() || gameMenuRequest.coreOptions.isNotEmpty()) {
-            LemuroidSettingsMenuLink(
-                title = { Text(text = stringResource(id = R.string.game_menu_settings)) },
-                icon = {
-                    Icon(
-                        painterResource(R.drawable.ic_menu_settings),
-                        contentDescription = stringResource(id = R.string.game_menu_settings),
-                    )
-                },
-                onClick = { navController.navigateToRoute(GameMenuRoute.OPTIONS) },
-            )
-        }
-
-        if (gameMenuRequest.allTiltConfigurations.isNotEmpty()) {
-            val tiltConfigurationEntries =
-                gameMenuRequest.allTiltConfigurations
-                    .map { TiltConfigurationMenuEntry.fromTiltConfiguration(it) }
-
-            val selectedIndex =
-                gameMenuRequest.allTiltConfigurations
-                    .indexOf(gameMenuRequest.currentTiltConfiguration)
-
-            LemuroidSettingsList(
-                title = { Text(text = stringResource(id = R.string.game_menu_tilt_sensor)) },
-                items = tiltConfigurationEntries.map { stringResource(it.descriptionId) },
-                useSelectedValueAsSubtitle = false,
-                icon = {
-                    Icon(
-                        imageVector = Icons.Default.Sensors,
-                        contentDescription = stringResource(id = R.string.game_menu_tilt_sensor),
-                    )
-                },
-                state = rememberMemoryIntSettingState(selectedIndex),
-                onItemSelected = { index, _ ->
-                    onResult {
-                        putExtra(
-                            GameMenuContract.RESULT_CHANGE_TILT_CONFIG,
-                            tiltConfigurationEntries[index].configuration,
+            }
+            if (gameMenuRequest.game.systemId in setOf("gb", "gbc", "gba")) {
+                LemuroidSettingsMenuLink(
+                    title = { Text(stringResource(R.string.game_menu_achievements)) },
+                    subtitle = { Text(stringResource(R.string.game_menu_achievements_subtitle)) },
+                    icon = {
+                        Icon(
+                            imageVector = Icons.Default.EmojiEvents,
+                            contentDescription = stringResource(R.string.game_menu_achievements),
+                            tint = MaterialTheme.colorScheme.tertiary,
                         )
-                    }
-                },
+                    },
+                    onClick = { navController.navigateToRoute(GameMenuRoute.ACHIEVEMENTS) },
+                )
+            }
+        }
+
+        MenuSection(title = stringResource(R.string.game_menu_section_gameplay)) {
+            LemuroidSettingsMenuLink(
+                title = { Text(stringResource(R.string.game_menu_quit)) },
+                icon = { MenuIcon(painterResource(R.drawable.ic_menu_quit), R.string.game_menu_quit) },
+                onClick = { onResult { putExtra(GameMenuContract.RESULT_QUIT, true) } },
             )
+            LemuroidSettingsMenuLink(
+                title = { Text(stringResource(R.string.game_menu_restart)) },
+                icon = { MenuIcon(painterResource(R.drawable.ic_menu_restart), R.string.game_menu_restart) },
+                onClick = { onResult { putExtra(GameMenuContract.RESULT_RESET, true) } },
+            )
+            LemuroidSettingsSwitch(
+                title = { Text(stringResource(R.string.game_menu_mute_audio)) },
+                icon = { MenuIcon(painterResource(R.drawable.ic_menu_mute), R.string.game_menu_mute_audio) },
+                state = rememberMemoryBooleanSettingState(!gameMenuRequest.audioEnabled),
+                onCheckedChange = { onResult { putExtra(GameMenuContract.RESULT_ENABLE_AUDIO, !it) } },
+            )
+            if (gameMenuRequest.fastForwardSupported) {
+                LemuroidSettingsSwitch(
+                    title = { Text(stringResource(R.string.game_menu_fast_forward)) },
+                    icon = { MenuIcon(painterResource(R.drawable.ic_menu_fast_forward), R.string.game_menu_fast_forward) },
+                    state = rememberMemoryBooleanSettingState(gameMenuRequest.fastForwardEnabled),
+                    onCheckedChange = { onResult { putExtra(GameMenuContract.RESULT_ENABLE_FAST_FORWARD, it) } },
+                )
+            }
+            if (gameMenuRequest.numDisks > 1) {
+                LemuroidSettingsList(
+                    title = { Text(stringResource(R.string.game_menu_change_disk_button)) },
+                    items = (1..gameMenuRequest.numDisks).map { stringResource(R.string.game_menu_change_disk_disk, it) },
+                    useSelectedValueAsSubtitle = false,
+                    icon = { MenuIcon(painterResource(R.drawable.ic_menu_disk), R.string.game_menu_change_disk_button) },
+                    state = rememberMemoryIntSettingState(gameMenuRequest.currentDisk),
+                    onItemSelected = { index, _ -> onResult { putExtra(GameMenuContract.RESULT_CHANGE_DISK, index) } },
+                )
+            }
+        }
+
+        MenuSection(title = stringResource(R.string.game_menu_section_tools)) {
+            LemuroidSettingsMenuLink(
+                title = { Text(stringResource(R.string.game_menu_edit_touch_controls)) },
+                icon = { MenuIcon(painterResource(R.drawable.ic_menu_controls), R.string.game_menu_edit_touch_controls) },
+                onClick = { onResult { putExtra(GameMenuContract.RESULT_EDIT_TOUCH_CONTROLS, true) } },
+            )
+            LemuroidSettingsMenuLink(
+                title = { Text(stringResource(R.string.game_menu_cheats)) },
+                icon = { Icon(Icons.Default.Code, stringResource(R.string.game_menu_cheats)) },
+                onClick = { navController.navigateToRoute(GameMenuRoute.CHEATS) },
+            )
+            if (gameMenuRequest.advancedCoreOptions.isNotEmpty() || gameMenuRequest.coreOptions.isNotEmpty()) {
+                LemuroidSettingsMenuLink(
+                    title = { Text(stringResource(R.string.game_menu_settings)) },
+                    icon = { MenuIcon(painterResource(R.drawable.ic_menu_settings), R.string.game_menu_settings) },
+                    onClick = { navController.navigateToRoute(GameMenuRoute.OPTIONS) },
+                )
+            }
+            if (gameMenuRequest.allTiltConfigurations.isNotEmpty()) {
+                val tiltConfigurationEntries = gameMenuRequest.allTiltConfigurations.map { TiltConfigurationMenuEntry.fromTiltConfiguration(it) }
+                val selectedIndex = gameMenuRequest.allTiltConfigurations.indexOf(gameMenuRequest.currentTiltConfiguration)
+                LemuroidSettingsList(
+                    title = { Text(stringResource(R.string.game_menu_tilt_sensor)) },
+                    items = tiltConfigurationEntries.map { stringResource(it.descriptionId) },
+                    useSelectedValueAsSubtitle = false,
+                    icon = { Icon(Icons.Default.Sensors, stringResource(R.string.game_menu_tilt_sensor)) },
+                    state = rememberMemoryIntSettingState(selectedIndex),
+                    onItemSelected = { index, _ ->
+                        onResult { putExtra(GameMenuContract.RESULT_CHANGE_TILT_CONFIG, tiltConfigurationEntries[index].configuration) }
+                    },
+                )
+            }
         }
     }
+}
+
+@Composable
+private fun MenuSection(
+    title: String,
+    content: @Composable ColumnScope.() -> Unit,
+) {
+    Surface(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(24.dp),
+        color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.72f),
+        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.72f)),
+    ) {
+        Column {
+            Text(
+                text = title.uppercase(),
+                style = MaterialTheme.typography.labelMedium,
+                color = MaterialTheme.colorScheme.tertiary,
+                modifier = Modifier.padding(start = 20.dp, top = 16.dp, end = 20.dp, bottom = 4.dp),
+            )
+            content()
+        }
+    }
+}
+
+@Composable
+private fun MenuIcon(painter: androidx.compose.ui.graphics.painter.Painter, descriptionId: Int) {
+    Icon(
+        painter = painter,
+        contentDescription = stringResource(descriptionId),
+        tint = MaterialTheme.colorScheme.onSurfaceVariant,
+    )
 }

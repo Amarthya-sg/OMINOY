@@ -87,6 +87,8 @@
 
     <string name="settings_title_advanced_settings">Advanced settings</string>
     <string name="settings_description_advanced_settings">Display advanced settings</string>
+    <string name="settings_title_retroachievements">RetroAchievements</string>
+    <string name="settings_description_retroachievements">Sign in and view your achievement profile</string>
     <string name="settings_title_low_latency_audio">Prefer low-latency audio</string>
     <string name="settings_description_low_latency_audio">Reduce audio latency on supported devices. Might increase audio glitches.</string>
 
@@ -161,6 +163,14 @@
     <string name="game_menu_quit">Quit</string>
     <string name="game_menu_settings">Settings</string>
     <string name="game_menu_cheats">Cheats</string>
+    <string name="game_menu_achievements">Achievements</string>
+    <string name="game_menu_achievements_subtitle">View this game’s RetroAchievements</string>
+    <string name="game_menu_achievements_empty">No cached achievements are available yet. Sign in to RetroAchievements and sync this game to populate the list.</string>
+    <string name="game_menu_achievements_progress">%1$d of %2$d achievements unlocked</string>
+    <string name="game_menu_achievement_points">%1$d pts</string>
+    <string name="game_menu_section_progress">Progress</string>
+    <string name="game_menu_section_gameplay">Gameplay</string>
+    <string name="game_menu_section_tools">Tools</string>
     <string name="game_cheats_description">Cheats are saved for this game only. The selected code type is a label and validation choice; it is not sent to the emulator core and does not force how the core interprets the code. Changes take effect when you return to the game.</string>
     <string name="game_cheats_add">Add cheat</string>
     <string name="game_cheats_add_title">Add cheat</string>
@@ -295,6 +305,10 @@
     <string name="tilt_configuration_buttons_l1_r1">L1 - R1</string>
     <string name="tilt_configuration_buttons_l2_r2">L2 - R2</string>
 
+    <string name="settings_title_save_folder">Save folder</string>
+    <string name="settings_save_folder_default">Default</string>
+    <string name="settings_reset_save_folder">Reset save folder</string>
+    <string name="settings_save_folder_unavailable">That folder could not be accessed. Choose another folder or keep using the default.</string>
     <string name="settings_title_data_folder">OMINOY data folder</string>
     <string name="settings_description_data_folder">Choose where ROMs, saves, save states, and state previews are stored. Custom shared folders need All files access.</string>
     <string name="data_folder_access_title">Allow access to manage files?</string>

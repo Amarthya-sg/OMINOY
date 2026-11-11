@@ -33,6 +33,9 @@ interface GameDao {
     @Query("SELECT * FROM games WHERE id = :id")
     suspend fun selectById(id: Int): Game?
 
+    @Query("SELECT * FROM games ORDER BY id ASC")
+    suspend fun selectAll(): List<Game>
+
     @Query("SELECT * FROM games WHERE fileUri = :fileUri")
     fun selectByFileUri(fileUri: String): Game?
 
@@ -44,7 +47,7 @@ interface GameDao {
 
     @Query(
         """
-        SELECT * FROM games WHERE lastPlayedAt IS NOT NULL AND isFavorite = 0 ORDER BY lastPlayedAt DESC LIMIT :limit
+        SELECT * FROM games WHERE lastPlayedAt IS NOT NULL ORDER BY lastPlayedAt DESC, id DESC LIMIT :limit
         """,
     )
     fun selectFirstUnfavoriteRecents(limit: Int): Flow<List<Game>>

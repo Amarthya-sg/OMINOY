@@ -21,6 +21,8 @@ package come.asg.lemudroid.app
 
 import come.asg.lemudroid.app.shared.library.CoreUpdateWork
 import come.asg.lemudroid.app.shared.library.LibraryIndexWork
+import come.asg.lemudroid.app.shared.game.RetroAchievementsPendingUploadWork
+import come.asg.lemudroid.app.shared.game.RetroAchievementsSyncWork
 import come.asg.lemudroid.app.shared.savesync.SaveSyncWork
 import come.asg.lemudroid.app.shared.storage.cache.CacheCleanerWork
 import come.asg.lemudroid.app.tv.LemuroidTVApplicationModule
@@ -37,6 +39,8 @@ import dagger.android.support.AndroidSupportInjectionModule
         AndroidWorkerInjectionModule::class,
         LemuroidApplicationModule::class,
         LibraryIndexWork.Module::class,
+        RetroAchievementsPendingUploadWork.Module::class,
+        RetroAchievementsSyncWork.Module::class,
         SaveSyncWork.Module::class,
         ChannelUpdateWork.Module::class,
         CoreUpdateWork.Module::class,

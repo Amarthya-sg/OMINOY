@@ -7,18 +7,12 @@ import androidx.work.WorkerParameters
 import come.asg.lemudroid.app.mobile.shared.NotificationsManager
 import come.asg.lemudroid.app.utils.android.createSyncForegroundInfo
 import come.asg.lemudroid.lib.core.CoreUpdater
-import come.asg.lemudroid.lib.core.CoresSelection
+import come.asg.lemudroid.lib.library.CoreID
 import come.asg.lemudroid.lib.injection.AndroidWorkerInjection
 import come.asg.lemudroid.lib.injection.WorkerKey
-import come.asg.lemudroid.lib.library.GameSystem
-import come.asg.lemudroid.lib.library.db.RetrogradeDatabase
 import dagger.Binds
 import dagger.android.AndroidInjector
 import dagger.multibindings.IntoMap
-import kotlinx.coroutines.flow.asFlow
-import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.flow.mapNotNull
-import kotlinx.coroutines.flow.toList
 import timber.log.Timber
 import java.util.concurrent.CancellationException
 import javax.inject.Inject
@@ -26,13 +20,7 @@ import javax.inject.Inject
 class CoreUpdateWork(context: Context, workerParams: WorkerParameters) :
     CoroutineWorker(context, workerParams) {
     @Inject
-    lateinit var retrogradeDatabase: RetrogradeDatabase
-
-    @Inject
     lateinit var coreUpdater: CoreUpdater
-
-    @Inject
-    lateinit var coresSelection: CoresSelection
 
     override suspend fun doWork(): Result {
         AndroidWorkerInjection.inject(this)
@@ -50,15 +38,16 @@ class CoreUpdateWork(context: Context, workerParams: WorkerParameters) :
         setForegroundAsync(foregroundInfo)
 
         try {
-            val cores =
-                retrogradeDatabase.gameDao().selectSystems()
-                    .asFlow()
-                    .mapNotNull { GameSystem.findByIdOrNull(it) }
-                    .map { coresSelection.getCoreConfigForSystem(it) }
-                    .map { it.coreID }
-                    .toList()
+            // GB, GBC, and GBA all use the same mGBA core in this build. Request it
+            // unconditionally so the first game launch does not trigger a download.
+            val cores = listOf(CoreID.MGBA)
 
-            coreUpdater.downloadCores(applicationContext, cores)
+            val missing = cores.filterNot { coreUpdater.isCoreInstalled(applicationContext, it) }
+            if (missing.isNotEmpty()) {
+                coreUpdater.downloadCores(applicationContext, missing)
+            } else {
+                Timber.i("mGBA is already installed; skipping core download")
+            }
         } catch (e: CancellationException) {
             throw e
         } catch (e: Exception) {

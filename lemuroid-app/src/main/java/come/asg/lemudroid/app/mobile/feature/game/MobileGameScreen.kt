@@ -1,7 +1,16 @@
 package come.asg.lemudroid.app.mobile.feature.game
 
 import android.graphics.RectF
+import android.provider.Settings
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInVertically
+import androidx.compose.animation.slideOutVertically
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.gestures.detectDragGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -11,19 +20,25 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.WindowInsetsSides
 import androidx.compose.foundation.layout.displayCutout
+import androidx.compose.foundation.layout.safeDrawing
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.only
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.EmojiEvents
 import androidx.compose.material.icons.filled.Save
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -43,6 +58,8 @@ import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.graphics.Color
@@ -50,10 +67,15 @@ import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.boundsInRoot
 import androidx.compose.ui.layout.layoutId
 import androidx.compose.ui.layout.onGloballyPositioned
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.semantics.LiveRegionMode
+import androidx.compose.ui.semantics.liveRegion
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -66,13 +88,17 @@ import com.swordfish.touchinput.radial.sensors.TiltConfiguration
 import com.swordfish.touchinput.radial.settings.LocalTouchControlEditor
 import com.swordfish.touchinput.radial.settings.LocalTouchControllerSettings
 import com.swordfish.touchinput.radial.settings.TouchControlEditorState
+import java.io.File
 import com.swordfish.touchinput.radial.settings.TouchControllerSettingsManager
 import com.swordfish.touchinput.radial.settings.TouchControllerSettingsManager.ControlSettings
 import com.swordfish.touchinput.radial.settings.applyStickSensitivity
 import com.swordfish.touchinput.radial.ui.GlassSurface
 import com.swordfish.touchinput.radial.ui.LemuroidButtonPressFeedback
+import coil.compose.AsyncImage
 import come.asg.lemudroid.app.mobile.feature.settings.inputdevices.TouchLayoutEditorScreen
 import come.asg.lemudroid.app.shared.game.BaseGameScreenViewModel
+import come.asg.lemudroid.app.shared.game.RetroAchievementsGameState
+import come.asg.lemudroid.app.shared.game.RetroAchievementPopup
 import come.asg.lemudroid.app.shared.game.viewmodel.GameViewModelTouchControls.Companion.MENU_LOADING_ANIMATION_MILLIS
 import come.asg.lemudroid.app.shared.settings.HapticFeedbackMode
 import come.asg.lemudroid.app.utils.android.settings.rememberTouchButtonAppearanceTheme
@@ -333,6 +359,40 @@ fun MobileGameScreen(viewModel: BaseGameScreenViewModel) {
             }
         }
 
+        val retroAchievementsState = viewModel.retroGameView.retroAchievementsState.collectAsState()
+        val achievementPopup = viewModel.retroGameView.retroAchievementPopup.collectAsState(null)
+        var displayedAchievement by remember { mutableStateOf<RetroAchievementPopup?>(null) }
+        LaunchedEffect(achievementPopup.value) {
+            val active = achievementPopup.value
+            if (active != null) {
+                displayedAchievement = active
+            } else if (displayedAchievement != null) {
+                kotlinx.coroutines.delay(300L)
+                if (achievementPopup.value == null) displayedAchievement = null
+            }
+        }
+        if (retroAchievementsState.value !is RetroAchievementsGameState.SignedOut && displayedAchievement == null) {
+            RetroAchievementsStatusPanel(
+                state = retroAchievementsState.value,
+                modifier = Modifier.align(Alignment.TopEnd),
+            )
+        }
+        displayedAchievement?.let { popup ->
+            val popupMaxWidth = if (isLandscape) minOf(maxWidth * 0.4f, 360.dp) else minOf(maxWidth * 0.9f, 420.dp)
+            Box(
+                modifier = Modifier
+                    .align(Alignment.TopCenter)
+                    .windowInsetsPadding(WindowInsets.safeDrawing.only(WindowInsetsSides.Top + WindowInsetsSides.Horizontal))
+                    .padding(horizontal = 12.dp, vertical = 8.dp),
+            ) {
+                AchievementUnlockPopup(
+                    popup = popup,
+                    visible = achievementPopup.value?.id == popup.id,
+                    maxWidth = popupMaxWidth,
+                )
+            }
+        }
+
         if (editControls.value && editControllerId.value != null) {
             TouchLayoutEditorScreen(
                 modifier = Modifier.fillMaxSize(),
@@ -346,6 +406,143 @@ fun MobileGameScreen(viewModel: BaseGameScreenViewModel) {
                     viewModel.openMenu()
                 },
             )
+        }
+    }
+}
+
+@Composable
+private fun RetroAchievementsStatusPanel(
+    state: RetroAchievementsGameState,
+    modifier: Modifier = Modifier,
+) {
+    val text = when (state) {
+        RetroAchievementsGameState.Connecting -> "RetroAchievements: connecting and loading achievements…"
+        is RetroAchievementsGameState.Ready -> "${state.title} · ${state.mode}"
+        is RetroAchievementsGameState.OfflineReady -> "${state.title} · Offline ready · ${state.mode}"
+        RetroAchievementsGameState.NoSetFound -> "RetroAchievements: no set found"
+        is RetroAchievementsGameState.Offline -> "RetroAchievements: offline"
+        is RetroAchievementsGameState.Unsupported -> "RetroAchievements: ${state.message}"
+        is RetroAchievementsGameState.Error -> "RetroAchievements: ${state.message}"
+        RetroAchievementsGameState.SignedOut -> "RetroAchievements: sign in to enable achievements"
+    }
+    Card(
+        modifier = modifier.padding(12.dp).widthIn(max = 320.dp),
+        colors = CardDefaults.cardColors(containerColor = Color.Black.copy(alpha = 0.82f)),
+    ) {
+        Text(
+            text = text,
+            color = Color.White,
+            fontSize = 12.sp,
+            modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp),
+        )
+    }
+}
+
+@Composable
+private fun AchievementUnlockPopup(popup: RetroAchievementPopup, visible: Boolean, maxWidth: androidx.compose.ui.unit.Dp) {
+    val context = LocalContext.current
+    val animationScale = remember(context) {
+        runCatching { Settings.Global.getFloat(context.contentResolver, Settings.Global.ANIMATOR_DURATION_SCALE, 1f) }
+            .getOrDefault(1f)
+    }
+    val reduceMotion = animationScale == 0f
+    val enter = if (reduceMotion) {
+        fadeIn(animationSpec = tween(220))
+    } else {
+        fadeIn(animationSpec = tween(250)) + slideInVertically(animationSpec = tween(250)) { -it / 2 }
+    }
+    val exit = if (reduceMotion) {
+        fadeOut(animationSpec = tween(220))
+    } else {
+        fadeOut(animationSpec = tween(250)) + slideOutVertically(animationSpec = tween(250)) { -it / 2 }
+    }
+    val gold = Color(0xFFFFC857)
+    val shape = RoundedCornerShape(16.dp)
+    var badgeFailed by remember(popup.id) { mutableStateOf(false) }
+
+    AnimatedVisibility(visible = visible, enter = enter, exit = exit) {
+        Card(
+            modifier = Modifier
+                .widthIn(max = maxWidth)
+                .fillMaxWidth()
+                .shadow(12.dp, shape = shape)
+                .border(1.dp, gold.copy(alpha = 0.72f), shape)
+                .semantics(mergeDescendants = true) { liveRegion = LiveRegionMode.Polite },
+            shape = shape,
+            colors = CardDefaults.cardColors(containerColor = Color(0xED17191D)),
+        ) {
+            Row(
+                modifier = Modifier.padding(12.dp),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Box(
+                    modifier = Modifier
+                        .size(48.dp)
+                        .clip(RoundedCornerShape(10.dp))
+                        .background(gold.copy(alpha = 0.13f))
+                        .semantics(mergeDescendants = true) { },
+                    contentAlignment = Alignment.Center,
+                ) {
+                    Icon(
+                        imageVector = Icons.Filled.EmojiEvents,
+                        contentDescription = null,
+                        tint = gold,
+                        modifier = Modifier.size(30.dp),
+                    )
+                    if (popup.badgeUrl.isNotBlank() && !badgeFailed) {
+                        AsyncImage(
+                            model = popup.badgeUrl.takeIf { !it.startsWith("/") }
+                                ?: File(popup.badgeUrl),
+                            contentDescription = "Achievement badge: ${popup.title}",
+                            contentScale = ContentScale.Crop,
+                            modifier = Modifier.fillMaxSize().clip(RoundedCornerShape(10.dp)),
+                            onError = { badgeFailed = true },
+                        )
+                    }
+                }
+                Spacer(modifier = Modifier.size(12.dp))
+                Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Text(
+                            text = "ACHIEVEMENT UNLOCKED",
+                            color = gold,
+                            fontSize = 10.sp,
+                            fontWeight = FontWeight.Bold,
+                            letterSpacing = 0.8.sp,
+                            maxLines = 1,
+                        )
+                        Spacer(modifier = Modifier.weight(1f))
+                        if (popup.points > 0) {
+                            Text(
+                                text = "${popup.points} pts",
+                                color = gold,
+                                fontSize = 11.sp,
+                                fontWeight = FontWeight.SemiBold,
+                                maxLines = 1,
+                            )
+                        }
+                    }
+                    Text(
+                        text = popup.title,
+                        color = Color.White,
+                        fontSize = 15.sp,
+                        fontWeight = FontWeight.Bold,
+                        maxLines = 2,
+                        overflow = TextOverflow.Ellipsis,
+                        lineHeight = 18.sp,
+                    )
+                    if (popup.description.isNotBlank()) {
+                        Text(
+                            text = popup.description,
+                            color = Color.White.copy(alpha = 0.78f),
+                            fontSize = 11.sp,
+                            maxLines = 2,
+                            overflow = TextOverflow.Ellipsis,
+                            lineHeight = 14.sp,
+                        )
+                    }
+                }
+            }
         }
     }
 }

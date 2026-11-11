@@ -282,7 +282,11 @@ class SaveSyncManagerImpl(
     private fun buildLocalFileMap(folder: File): Map<String, File> {
         return folder
             .walkBottomUp()
-            .filter { it.exists() && !it.isDirectory && it.length() > 0 }
+            .filter { file ->
+                file.exists() && !file.isDirectory && file.length() > 0 &&
+                    file.extension.lowercase() != "txt" &&
+                    file.relativeTo(folder).invariantSeparatorsPath.split('/').none { it.equals("logs", ignoreCase = true) }
+            }
             .map { it.toRelativeString(folder) to it }
             .toMap()
     }

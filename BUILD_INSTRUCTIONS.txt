@@ -1,0 +1,17 @@
+OMINOY retro GB/GBC/GBA build
+
+This source tree contains only the mGBA libretro core. mGBA is configured for Game Boy, Game Boy Color, and Game Boy Advance.
+
+Requirements:
+- JDK 21
+- Android SDK platform 35
+- Android Build Tools 34.0.0
+- Android NDK 27.2.12479018
+
+Configure local.properties with the Android SDK path, then build the Play Dynamic debug APK:
+
+    ./gradlew :lemuroid-app:assemblePlayDynamicDebug
+
+The APK is produced under:
+
+    lemuroid-app/build/outputs/apk/playDynamic/debug/

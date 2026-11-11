@@ -11,6 +11,7 @@ import androidx.activity.enableEdgeToEdge
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.WindowInsets
@@ -19,6 +20,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Close
@@ -30,6 +32,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
@@ -156,7 +159,23 @@ class GameMenuActivity : RetrogradeComponentActivity() {
 
             SideMenu {
                 TopAppBar(
-                    title = { Text(stringResource(currentRoute.titleId)) },
+                    title = {
+                        Column {
+                            Text(
+                                text = stringResource(currentRoute.titleId),
+                                style = MaterialTheme.typography.titleLarge,
+                            )
+                            Text(
+                                text = gameMenuRequest.game.displayName(),
+                                style = MaterialTheme.typography.labelMedium,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            )
+                        }
+                    },
+                    colors = TopAppBarDefaults.topAppBarColors(
+                        containerColor = MaterialTheme.colorScheme.surface,
+                        titleContentColor = MaterialTheme.colorScheme.onSurface,
+                    ),
                     windowInsets = WindowInsets(0.dp),
                     navigationIcon = {
                         AnimatedContent(targetState = currentRoute.canGoBack(), label = "Back") { canGoBack ->
@@ -243,6 +262,12 @@ class GameMenuActivity : RetrogradeComponentActivity() {
                             onCheatsChanged = { cheatsChanged = true },
                         )
                     }
+                    composable(GameMenuRoute.ACHIEVEMENTS) {
+                        GameMenuAchievementsScreen(
+                            game = gameMenuRequest.game,
+                            modifier = Modifier.fillMaxSize(),
+                        )
+                    }
                 }
             }
         }
@@ -262,10 +287,13 @@ class GameMenuActivity : RetrogradeComponentActivity() {
             Surface(
                 modifier =
                     Modifier
-                        .padding()
+                        .padding(start = 0.dp, top = 12.dp, end = 8.dp, bottom = 12.dp)
                         .fillMaxHeight()
                         .width(panelWidth)
-                        .clip(MaterialTheme.shapes.large),
+                        .clip(RoundedCornerShape(30.dp)),
+                shape = RoundedCornerShape(30.dp),
+                color = MaterialTheme.colorScheme.surface,
+                border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.8f)),
             ) {
                 Column(modifier = Modifier.fillMaxSize()) {
                     content()

@@ -8,6 +8,11 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.wrapContentHeight
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Info
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -23,6 +28,7 @@ fun LemuroidGameListRow(
     onClick: () -> Unit,
     onLongClick: () -> Unit,
     onFavoriteToggle: (Boolean) -> Unit,
+    onInfoClick: (() -> Unit)? = null,
 ) {
     Surface(
         modifier =
@@ -60,14 +66,22 @@ fun LemuroidGameListRow(
             Box(
                 modifier =
                     Modifier
-                        .width(40.dp)
+                        .width(if (onInfoClick != null) 80.dp else 40.dp)
                         .height(40.dp)
                         .align(Alignment.CenterVertically),
             ) {
-                FavoriteToggle(
-                    isToggled = game.isFavorite,
-                    onFavoriteToggle = onFavoriteToggle,
-                )
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    if (onInfoClick != null) {
+                        IconButton(onClick = onInfoClick) {
+                            Icon(
+                                Icons.Filled.Info,
+                                contentDescription = "${game.displayName()} play statistics",
+                                tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                            )
+                        }
+                    }
+                    FavoriteToggle(isToggled = game.isFavorite, onFavoriteToggle = onFavoriteToggle)
+                }
             }
         }
     }

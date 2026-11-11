@@ -10,6 +10,12 @@ import java.io.InputStream
 import java.util.zip.ZipInputStream
 
 interface CoreUpdater {
+    /** Returns true when the requested core is already available to this build. */
+    suspend fun isCoreInstalled(
+        context: Context,
+        coreID: CoreID,
+    ): Boolean
+
     suspend fun downloadCores(
         context: Context,
         coreIDs: List<CoreID>,

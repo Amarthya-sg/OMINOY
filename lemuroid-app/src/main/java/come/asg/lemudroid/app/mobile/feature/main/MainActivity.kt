@@ -62,6 +62,8 @@ import come.asg.lemudroid.app.mobile.feature.settings.inputdevices.InputDevicesS
 import come.asg.lemudroid.app.mobile.feature.settings.inputdevices.TouchLayoutEditorScreen
 import come.asg.lemudroid.app.mobile.feature.settings.savesync.SaveSyncSettingsScreen
 import come.asg.lemudroid.app.mobile.feature.settings.savesync.SaveSyncSettingsViewModel
+import come.asg.lemudroid.app.mobile.feature.settings.retroachievements.RetroAchievementsScreen
+import come.asg.lemudroid.app.mobile.feature.settings.retroachievements.RetroAchievementsViewModel
 import come.asg.lemudroid.app.mobile.feature.shortcuts.ShortcutsGenerator
 import come.asg.lemudroid.app.mobile.feature.systems.MetaSystemsScreen
 import come.asg.lemudroid.app.mobile.feature.systems.MetaSystemsViewModel
@@ -205,7 +207,8 @@ class MainActivity : RetrogradeComponentActivity(), BusyActivity {
                     if (currentRoute != MainRoute.SETTINGS_TOUCH_LAYOUT &&
                         currentRoute != MainRoute.SETTINGS_VIEWPORT_ALIGNMENT &&
                         currentRoute != MainRoute.HOME &&
-                        currentRoute != MainRoute.SYSTEMS
+                        currentRoute != MainRoute.SYSTEMS &&
+                        currentRoute != MainRoute.SETTINGS
                     ) {
                         MainTopBar(
                             currentRoute = currentRoute,
@@ -405,6 +408,13 @@ class MainActivity : RetrogradeComponentActivity(), BusyActivity {
                                             saveSyncManager,
                                         ),
                                 ),
+                        )
+                    }
+                    composable(MainRoute.SETTINGS_RETROACHIEVEMENTS) {
+                        RetroAchievementsScreen(
+                            modifier = Modifier.padding(padding),
+                            viewModel = viewModel(factory = RetroAchievementsViewModel.Factory(applicationContext)),
+                            database = retrogradeDb,
                         )
                     }
                     composable(MainRoute.GAME_CHEATS) { entry ->

@@ -8,6 +8,7 @@ import coil.ImageLoader
 import coil.ImageLoaderFactory
 import com.google.android.material.color.DynamicColors
 import come.asg.lemudroid.app.shared.covers.CoverUtils
+import come.asg.lemudroid.app.shared.game.RetroAchievementsEarnedStore
 import come.asg.lemudroid.app.shared.startup.GameProcessInitializer
 import come.asg.lemudroid.app.shared.startup.MainProcessInitializer
 import come.asg.lemudroid.app.utils.android.isMainProcess
@@ -16,6 +17,10 @@ import come.asg.lemudroid.lib.injection.HasWorkerInjector
 import dagger.android.AndroidInjector
 import dagger.android.DispatchingAndroidInjector
 import dagger.android.support.DaggerApplication
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 class LemuroidApplication : DaggerApplication(), HasWorkerInjector, ImageLoaderFactory {
@@ -34,6 +39,10 @@ class LemuroidApplication : DaggerApplication(), HasWorkerInjector, ImageLoaderF
             }
 
         AppInitializer.getInstance(this).initializeComponent(initializeComponent)
+
+        CoroutineScope(SupervisorJob() + Dispatchers.IO).launch {
+            RetroAchievementsEarnedStore.migrateLegacyStorage(applicationContext)
+        }
 
         DynamicColors.applyToActivitiesIfAvailable(this)
     }

@@ -52,6 +52,14 @@ class CoreUpdaterImpl(
 
     private val api = retrofit.create(CoreUpdater.CoreManagerApi::class.java)
 
+    override suspend fun isCoreInstalled(
+        context: Context,
+        coreID: CoreID,
+    ): Boolean = findBundledLibrary(context, coreID) != null ||
+        File(directoriesManager.getCoresDirectory(), CORES_VERSION)
+            .resolve(coreID.libretroFileName)
+            .let { it.isFile && it.length() > 0L }
+
     override suspend fun downloadCores(
         context: Context,
         coreIDs: List<CoreID>,

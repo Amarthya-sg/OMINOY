@@ -102,9 +102,6 @@
         <activity
             android:name="come.asg.lemudroid.app.shared.settings.DataFolderPickerLauncher"
             android:theme="@style/LemuroidMaterialTheme.Invisible" />
-        <activity
-            android:name="come.asg.lemudroid.app.shared.settings.SaveFolderPickerLauncher"
-            android:theme="@style/LemuroidMaterialTheme.Invisible" />
 
         <!-- Leanback activities -->
         <activity

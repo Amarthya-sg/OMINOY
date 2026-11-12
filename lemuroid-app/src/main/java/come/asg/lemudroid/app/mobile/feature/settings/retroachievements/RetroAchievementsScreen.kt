@@ -58,12 +58,10 @@ import androidx.compose.material.icons.filled.Visibility
 import androidx.compose.material.icons.filled.VisibilityOff
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.AssistChip
-import androidx.compose.material3.BottomSheetDefaults
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Divider
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilterChip
-import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
@@ -89,6 +87,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -746,7 +745,7 @@ class RetroAchievementsViewModel(context: Context) : ViewModel() {
             val current = _state.value as? AuthState.LoggedIn ?: return@launch
             result.onSuccess { web ->
                 RetroAchievementsAccountBridge.setWebApiCredentials(web)
-                _state.value = AuthState.LoggedIn(current.profile.copy(webApiConnected = true, webApiMessage = "Connected"))
+                _state.value = AuthState.LoggedIn(current.profile.copy(webApiConnected = true, webApiMessage = "API secured"))
             }.onFailure { error ->
                 val message = when (error) {
                     is AuthRejectedException -> "Invalid Web API key"
@@ -803,8 +802,8 @@ fun RetroAchievementsScreen(modifier: Modifier = Modifier, viewModel: RetroAchie
     var webApiKey by remember { mutableStateOf("") }
     var webApiKeyVisible by remember { mutableStateOf(false) }
     var confirmLogout by remember { mutableStateOf(false) }
-    var showKeySheet by remember { mutableStateOf(false) }
     var showKeyWebView by remember { mutableStateOf(false) }
+    var showWebApiDialog by rememberSaveable { mutableStateOf(false) }
     var showGames by remember { mutableStateOf(false) }
     var selectedGameId by remember { mutableStateOf<Int?>(null) }
     var selectedAchievement by remember { mutableStateOf<Pair<String, RetroAchievementsEarnedStore.Achievement>?>(null) }
@@ -816,6 +815,20 @@ fun RetroAchievementsScreen(modifier: Modifier = Modifier, viewModel: RetroAchie
     fun toast(message: String) { scope.launch { snackHost.showSnackbar(message, withDismissAction = false) } }
     val loggedIn = state as? AuthState.LoggedIn
     val profile = loggedIn?.profile
+    val savedWebApiCredentials by RetroAchievementsAccountBridge.webApiCredentials.collectAsState()
+    val hasSavedWebApiKey = profile != null &&
+        savedWebApiCredentials?.username?.equals(profile.username, ignoreCase = true) == true
+    val isWebApiVerifying = profile?.webApiMessage?.contains("Validating", ignoreCase = true) == true
+    val webApiErrorMessage = profile?.webApiMessage?.takeIf { message ->
+        !isWebApiVerifying &&
+            (message == "Invalid Web API key" || message == "API unavailable" || message == "Could not validate Web API key")
+    }
+    LaunchedEffect(hasSavedWebApiKey) {
+        if (hasSavedWebApiKey) {
+            webApiKey = ""
+            webApiKeyVisible = false
+        }
+    }
     val stats = profile?.achievements
     val refreshRotation by rememberInfiniteTransition(label = "accountRefresh").animateFloat(
         initialValue = 0f,
@@ -833,7 +846,6 @@ fun RetroAchievementsScreen(modifier: Modifier = Modifier, viewModel: RetroAchie
     LaunchedEffect(loggedIn != null, showGames) {
         if (loggedIn != null && showGames) {
             password = ""
-            if (profile?.webApiConnected == true && showKeySheet) showKeySheet = false
             cacheLoading = true
             cachedAchievements = withContext(Dispatchers.IO) { runCatching { RetroAchievementsEarnedStore.readAll(context) }.getOrDefault(emptyList()) }
             cacheLoading = false
@@ -890,7 +902,15 @@ fun RetroAchievementsScreen(modifier: Modifier = Modifier, viewModel: RetroAchie
                     }
                     is AuthState.LoggedIn -> {
                         val p = profile!!
-                        ProfileHero(p, onWebApiKeyClick = { showKeySheet = true })
+                        ProfileHero(
+                            profile = p,
+                            hasSavedKey = hasSavedWebApiKey,
+                            onWebApiKeyClick = {
+                                webApiKey = ""
+                                webApiKeyVisible = false
+                                showWebApiDialog = true
+                            },
+                        )
                         ProfileSection(title = "Achievement progress") {
                             Text("Game Boy, Game Boy Color and Game Boy Advance", style = MaterialTheme.typography.bodySmall, color = RaMuted)
                             if (p.achievementsLoading) LinearProgressIndicator(Modifier.fillMaxWidth(), color = RaTeal)
@@ -973,34 +993,69 @@ fun RetroAchievementsScreen(modifier: Modifier = Modifier, viewModel: RetroAchie
         }
     }
 
-    if (showKeySheet && profile != null) ModalBottomSheet(onDismissRequest = { showKeySheet = false }, containerColor = RaCard2, dragHandle = { BottomSheetDefaults.DragHandle(color = Color.White.copy(alpha = .35f)) }) {
-        Column(Modifier.fillMaxWidth().padding(horizontal = 20.dp).padding(bottom = 28.dp), verticalArrangement = Arrangement.spacedBy(14.dp)) {
-            Text("Offline sync", fontSize = 18.sp, fontWeight = FontWeight.Bold, color = RaOn)
-            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                Box(Modifier.size(8.dp).clip(CircleShape).background(if (profile.webApiConnected) RaTeal else RaMuted))
-                Text(profile.webApiMessage ?: if (profile.webApiConnected) "Web API connected" else "Web API not connected", color = if (profile.webApiConnected) RaTeal else RaMuted, fontSize = 13.sp, fontWeight = FontWeight.Bold)
-            }
-            Text("A Web API key lets OMINOY cache every achievement and your unlock status for offline viewing.", color = RaMuted, fontSize = 13.sp)
-            TextButton(onClick = { showKeyWebView = true }, modifier = Modifier.fillMaxWidth()) { Text("Get a Web API key") }
-            OutlinedTextField(webApiKey, { webApiKey = it }, label = { Text("Web API key") }, placeholder = { Text("Paste your key") }, singleLine = true, visualTransformation = if (webApiKeyVisible) VisualTransformation.None else PasswordVisualTransformation(), trailingIcon = { IconButton(onClick = { webApiKeyVisible = !webApiKeyVisible }) { Icon(if (webApiKeyVisible) Icons.Default.VisibilityOff else Icons.Default.Visibility, "Show or hide Web API key") } }, modifier = Modifier.fillMaxWidth())
-            Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                Button(onClick = { viewModel.saveWebApiKey(webApiKey); webApiKey = ""; toast("Validating Web API key…") }, enabled = webApiKey.isNotBlank(), modifier = Modifier.weight(1f), shape = RoundedCornerShape(99.dp), colors = ButtonDefaults.buttonColors(containerColor = RaTeal, contentColor = RaColors.OnMint)) { Text("Save key") }
-                OutlinedButton(onClick = { viewModel.removeWebApiKey(); webApiKey = ""; toast("Web API key removed") }, modifier = Modifier.weight(1f), shape = RoundedCornerShape(99.dp)) { Text("Remove") }
-            }
-        }
-    }
+    if (showWebApiDialog && profile != null) WebApiKeyDialog(
+        username = profile.username,
+        apiKey = webApiKey,
+        onApiKeyChange = { webApiKey = it },
+        hasSavedKey = hasSavedWebApiKey,
+        isVerifying = isWebApiVerifying,
+        errorMessage = webApiErrorMessage,
+        isKeyVisible = webApiKeyVisible,
+        onToggleKeyVisibility = { webApiKeyVisible = !webApiKeyVisible },
+        onGetApiKey = { showKeyWebView = true },
+        onSaveAndVerify = {
+            viewModel.saveWebApiKey(webApiKey)
+            toast("Validating Web API key…")
+        },
+        onResetAndEnterNewKey = {
+            viewModel.removeWebApiKey()
+            webApiKey = ""
+            webApiKeyVisible = false
+            toast("Web API key removed")
+        },
+        onDismiss = {
+            showWebApiDialog = false
+            webApiKey = ""
+            webApiKeyVisible = false
+        },
+    )
     if (showKeyWebView && profile != null) Dialog(
         onDismissRequest = { showKeyWebView = false },
         properties = DialogProperties(usePlatformDefaultWidth = false, decorFitsSystemWindows = false),
     ) {
-        Column(Modifier.fillMaxSize().background(RaCard2)) {
-            Text(
-                "Sign in as ${profile.username} to get your key. The key is not read or captured by OMINOY; copy it from the official page and paste it below.",
-                color = RaOn,
-                modifier = Modifier.fillMaxWidth().padding(16.dp),
-            )
+        Column(Modifier.fillMaxSize().background(Color.Black)) {
+            Row(
+                modifier = Modifier.fillMaxWidth().background(RaCard).padding(horizontal = 12.dp, vertical = 8.dp),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(10.dp),
+            ) {
+                IconButton(onClick = { showKeyWebView = false }) {
+                    Icon(Icons.Default.ArrowBack, contentDescription = "Close Web API preview", tint = RaOn)
+                }
+                Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
+                    Text("Get a Web API key", color = RaOn, fontSize = 18.sp, fontWeight = FontWeight.ExtraBold)
+                    Text("RetroAchievements · secure in-app preview", color = RaTeal, fontSize = 12.sp, fontWeight = FontWeight.SemiBold)
+                }
+                Icon(Icons.Default.Lock, contentDescription = "Secure preview", tint = RaTeal)
+            }
+            Row(
+                modifier = Modifier.fillMaxWidth().background(RaCard2).padding(horizontal = 18.dp, vertical = 14.dp),
+                verticalAlignment = Alignment.Top,
+                horizontalArrangement = Arrangement.spacedBy(12.dp),
+            ) {
+                Icon(Icons.Default.Info, contentDescription = null, tint = RaTeal, modifier = Modifier.padding(top = 2.dp))
+                Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                    Text("Signed in as ${profile.username}", color = RaOn, fontSize = 14.sp, fontWeight = FontWeight.Bold)
+                    Text(
+                        "Copy your key from the official page. OMINOY does not read the page contents; return here and paste the key into this field.",
+                        color = RaMuted,
+                        fontSize = 12.sp,
+                    )
+                }
+            }
+            HorizontalDivider(color = RaLine)
             AndroidView(
-                modifier = Modifier.fillMaxSize(),
+                modifier = Modifier.weight(1f).fillMaxWidth(),
                 factory = { viewContext ->
                     RetroAchievementsWebSession.prepareForAccount(viewContext, profile.username)
                     WebView(viewContext).apply {
@@ -1236,7 +1291,7 @@ private data class CachedGameAchievements(
 )
 
 @Composable
-private fun ProfileHero(profile: Profile, onWebApiKeyClick: () -> Unit) {
+private fun ProfileHero(profile: Profile, hasSavedKey: Boolean, onWebApiKeyClick: () -> Unit) {
     Box(
         modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(30.dp)).background(
             Brush.linearGradient(listOf(RaColors.Purple, RaColors.DeepPurple, RaColors.DeepTeal)),
@@ -1270,7 +1325,7 @@ private fun ProfileHero(profile: Profile, onWebApiKeyClick: () -> Unit) {
         }
         Box(Modifier.align(Alignment.TopEnd).padding(12.dp).size(40.dp).clip(CircleShape).background(Color.Black.copy(alpha = 0.38f)).clickable(onClick = onWebApiKeyClick), contentAlignment = Alignment.Center) {
             Text("🔑", color = RaOn, fontSize = 17.sp)
-            if (profile.webApiConnected) Box(Modifier.align(Alignment.TopEnd).padding(5.dp).size(9.dp).clip(CircleShape).background(RaTeal))
+            if (hasSavedKey) Box(Modifier.align(Alignment.TopEnd).padding(5.dp).size(9.dp).clip(CircleShape).background(RaTeal))
         }
     }
 }

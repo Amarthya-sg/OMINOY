@@ -308,7 +308,6 @@
     <string name="settings_title_save_folder">Save folder</string>
     <string name="settings_save_folder_default">Default</string>
     <string name="settings_reset_save_folder">Reset save folder</string>
-    <string name="settings_save_folder_unavailable">That folder could not be accessed. Choose another folder or keep using the default.</string>
     <string name="settings_title_data_folder">OMINOY data folder</string>
     <string name="settings_description_data_folder">Choose where ROMs, saves, save states, and state previews are stored. Custom shared folders need All files access.</string>
     <string name="data_folder_access_title">Allow access to manage files?</string>

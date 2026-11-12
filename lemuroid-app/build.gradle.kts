@@ -206,6 +206,7 @@ dependencies {
 
     kapt(deps.libs.dagger.android.processor)
     kapt(deps.libs.dagger.compiler)
+    testImplementation("junit:junit:4.13.2")
 }
 
 fun usePlayDynamicFeatures(): Boolean {

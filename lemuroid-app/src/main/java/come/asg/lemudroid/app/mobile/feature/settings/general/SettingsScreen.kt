@@ -93,8 +93,6 @@ fun SettingsScreen(
                 "Library" -> RomsSettings(
                     state = state,
                     onChangeFolder = { viewModel.changeLocalStorageFolder() },
-                    onChooseSaveFolder = { viewModel.changeSaveFolder() },
-                    onResetSaveFolder = { viewModel.resetSaveFolder() },
                     indexingInProgress = indexingInProgress,
                     scanInProgress = scanInProgress,
                 )
@@ -324,8 +322,6 @@ private fun DisplaySettings(navController: NavController) {
 private fun RomsSettings(
     state: SettingsViewModel.State,
     onChangeFolder: () -> Unit,
-    onChooseSaveFolder: () -> Unit,
-    onResetSaveFolder: () -> Unit,
     indexingInProgress: Boolean,
     scanInProgress: Boolean,
 ) {
@@ -336,11 +332,6 @@ private fun RomsSettings(
     }
     LemuroidCardSettingsGroup(title = { Text(text = "Library") }) {
         LemuroidSettingsMenuLink(title = { Text("ROM directory") }, subtitle = { Text(currentDirectoryName) }, onClick = onChangeFolder, enabled = !indexingInProgress)
-        val saveFolderName = remember(state.saveFolderUri) { state.saveFolderUri?.let { uri -> runCatching { DocumentFile.fromTreeUri(context, Uri.parse(uri))?.name }.getOrNull() } }
-        LemuroidSettingsMenuLink(title = { Text("Save folder") }, subtitle = { Text(saveFolderName ?: "Default") }, onClick = onChooseSaveFolder)
-        if (state.saveFolderUri != null) {
-            LemuroidSettingsMenuLink(title = { Text("Reset save folder") }, onClick = onResetSaveFolder)
-        }
         LemuroidSettingsMenuLink(title = { Text("Data folder") }, subtitle = { Text("ROMs, saves, save states and previews") }, onClick = { DataFolderPickerLauncher.pickFolder(context) })
         if (scanInProgress) {
             LemuroidSettingsMenuLink(title = { Text("Stop") }, onClick = { LibraryIndexScheduler.cancelLibrarySync(context) })

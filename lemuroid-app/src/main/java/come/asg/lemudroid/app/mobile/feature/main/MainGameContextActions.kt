@@ -9,6 +9,7 @@ import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -20,6 +21,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.only
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeContent
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.rememberScrollState
@@ -40,9 +42,11 @@ import androidx.compose.material3.Divider
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.ModalBottomSheet
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.SheetState
 import androidx.compose.material3.SheetValue
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.rememberModalBottomSheetState
@@ -57,6 +61,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.graphics.Color
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.ui.unit.dp
 import come.asg.lemudroid.R
 import come.asg.lemudroid.app.mobile.shared.compose.ui.LemuroidGameTexts
@@ -93,6 +99,8 @@ fun MainGameContextActions(
         ModalBottomSheet(
             sheetState = modalSheetState,
             onDismissRequest = { selectedGameState.value = null },
+            containerColor = MaterialTheme.colorScheme.surface,
+            tonalElevation = 8.dp,
         ) {
             ContextActionContent(
                 selectedGame = selectedGame,
@@ -152,7 +160,10 @@ private fun ContextActionContent(
                 .windowInsetsPadding(WindowInsets.safeContent.only(WindowInsetsSides.Bottom)),
     ) {
         ContextActionHeader(game = selectedGame)
-        Divider()
+        Divider(
+            modifier = Modifier.padding(horizontal = 20.dp),
+            color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.55f),
+        )
         ContextActionEntry(
             label = stringResource(id = R.string.game_context_menu_resume),
             icon = Icons.Default.PlayArrow,
@@ -182,6 +193,7 @@ private fun ContextActionContent(
             ContextActionEntry(
                 label = stringResource(id = R.string.game_context_menu_remove_from_favorites),
                 icon = Icons.Default.FavoriteBorder,
+                iconTint = Color(0xFFFF7188),
                 onClick = {
                     onFavoriteToggle(selectedGame, false)
                     selectedGameState.value = null
@@ -279,30 +291,32 @@ private fun ContextActionContent(
 
 @Composable
 private fun ContextActionHeader(game: Game) {
-    Row(
-        modifier =
-            Modifier.padding(
-                start = 16.dp,
-                top = 8.dp,
-                bottom = 8.dp,
-                end = 16.dp,
-            ),
+    Surface(
+        modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp),
+        shape = RoundedCornerShape(22.dp),
+        color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.58f),
+        tonalElevation = 2.dp,
     ) {
-        LemuroidSmallGameImage(
-            modifier =
-                Modifier
-                    .width(40.dp)
-                    .height(40.dp)
-                    .align(Alignment.CenterVertically),
-            game = game,
-        )
-        LemuroidGameTexts(
-            modifier =
-                Modifier
-                    .weight(1f)
-                    .padding(start = 8.dp),
-            game = game,
-        )
+        Row(
+            modifier = Modifier.padding(horizontal = 16.dp, vertical = 16.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.Start,
+        ) {
+            Surface(
+                shape = RoundedCornerShape(13.dp),
+                color = MaterialTheme.colorScheme.surface,
+                tonalElevation = 3.dp,
+            ) {
+                LemuroidSmallGameImage(
+                    modifier = Modifier.width(56.dp).height(56.dp),
+                    game = game,
+                )
+            }
+            LemuroidGameTexts(
+                modifier = Modifier.weight(1f).padding(start = 16.dp),
+                game = game,
+            )
+        }
     }
 }
 
@@ -311,24 +325,37 @@ private fun ContextActionEntry(
     modifier: Modifier = Modifier,
     label: String,
     icon: ImageVector,
+    iconTint: Color = MaterialTheme.colorScheme.primary,
     onClick: () -> Unit,
 ) {
     Row(
         modifier =
             modifier
                 .fillMaxWidth()
+                .padding(horizontal = 12.dp)
                 .clickable(onClick = onClick)
-                .height(56.dp),
+                .height(60.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        Icon(
-            modifier = Modifier.padding(start = 16.dp),
-            imageVector = icon,
-            contentDescription = label,
-        )
+        Surface(
+            modifier = Modifier.padding(start = 8.dp).size(40.dp),
+            shape = RoundedCornerShape(13.dp),
+            color = iconTint.copy(alpha = 0.12f),
+        ) {
+            Box(contentAlignment = Alignment.Center) {
+                Icon(
+                    imageVector = icon,
+                    contentDescription = label,
+                    tint = iconTint,
+                    modifier = Modifier.size(21.dp),
+                )
+            }
+        }
         Text(
             modifier = Modifier.padding(start = 16.dp),
             text = label,
+            style = MaterialTheme.typography.bodyLarge,
+            color = MaterialTheme.colorScheme.onSurface,
         )
     }
 }

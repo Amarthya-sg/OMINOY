@@ -12,7 +12,6 @@ import come.asg.lemudroid.lib.savesync.SaveSyncManager
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.flowOn
-import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 
@@ -41,7 +40,6 @@ class SettingsViewModel(
     data class State(
         val currentDirectory: String = "",
         val isSaveSyncSupported: Boolean = false,
-        val saveFolderUri: String? = null,
     )
 
     val indexingInProgress = PendingOperationsMonitor(context).anyLibraryOperationInProgress()
@@ -51,13 +49,9 @@ class SettingsViewModel(
     private val currentDirectory =
         sharedPreferences.getString(context.getString(come.asg.lemudroid.lib.R.string.pref_key_extenral_folder))
             .asFlow()
-    private val saveFolderUri =
-        sharedPreferences.getString(context.getString(come.asg.lemudroid.lib.R.string.pref_key_save_folder))
-            .asFlow()
-            .map { it.takeIf(String::isNotEmpty) }
     val uiState =
-        combine(currentDirectory, saveFolderUri) { directory, saveFolder ->
-            State(directory, saveSyncManager.isSupported(), saveFolder)
+        currentDirectory.map { directory ->
+            State(directory, saveSyncManager.isSupported())
         }
             .flowOn(Dispatchers.IO)
             .stateIn(viewModelScope, SharingStarted.Lazily, State())
@@ -66,11 +60,4 @@ class SettingsViewModel(
         settingsInteractor.changeLocalStorageFolder()
     }
 
-    fun changeSaveFolder() {
-        come.asg.lemudroid.app.shared.settings.SaveFolderPickerLauncher.pickFolder(context)
-    }
-
-    fun resetSaveFolder() {
-        settingsInteractor.resetSaveFolder()
-    }
 }

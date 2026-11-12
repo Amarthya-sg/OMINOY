@@ -199,11 +199,6 @@ class GameViewModelRetroGameView(
                             .first()
                         val diagnostic = "RA_MEMORY_SPIKE ${result.getRaMemoryDiagnostics()}"
                         Timber.i("%s", diagnostic)
-                        come.asg.lemudroid.app.shared.settings.SaveDiagnosticsLogger.append(
-                            appContext,
-                            system.libretroFullName,
-                            diagnostic,
-                        )
                     }.onFailure {
                         Timber.w(it, "RA memory-map spike diagnostic failed")
                     }

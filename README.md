@@ -30,6 +30,34 @@ OMINOY does not include copyrighted games or ROM files. Use ROMs that you are le
 | Game Boy Color (GBC) | mGBA |
 | Game Boy Advance (GBA) | mGBA |
 
+## ✅ Feature status
+
+### Completed
+
+- [x] Game Boy, Game Boy Color, and Game Boy Advance emulation through mGBA
+- [x] ROM folder selection, library scanning, indexing, rescanning, and ZIP-compressed ROM support
+- [x] Library search, recent games, favorites, custom game names, custom artwork, and launcher shortcuts
+- [x] Per-game playtime, session count, and last-played information
+- [x] In-game save data, save states, quick save/load, and optional exit autosave
+- [x] Configurable save and OMINOY data folders
+- [x] Cloud save backup and sync, including manual sync and optional Wi-Fi auto-sync
+- [x] Cheats stored and managed separately for each game
+- [x] Customizable on-screen controls with layout, size, opacity, and sensitivity settings
+- [x] External gamepad and keyboard input with configurable bindings
+- [x] Tilt-sensor input, rumble, and local multiplayer input support
+- [x] Fast-forward, mute, immersive mode, AMOLED theme, and low-latency audio option
+- [x] Display filters, HD upscaling, LCD/CRT presentation, and viewport alignment
+- [x] Android phone, tablet, and Android TV support
+- [x] RetroAchievements sign-in, achievement lists, earned-progress tracking, and profile viewing
+- [x] Offline RetroAchievements preparation, local unlock recording, durable pending uploads, and later synchronization
+- [x] Safe ZIP extraction, validated core installation, sanitized file handling, and protected library cleanup
+
+### Pending
+
+- [ ] More display shader options and ready-made presets
+- [ ] Additional app themes
+- [ ] Custom UI skins and button layout themes
+
 ## 🚀 Getting started
 
 1. Install OMINOY on an Android phone, tablet, or Android TV device.

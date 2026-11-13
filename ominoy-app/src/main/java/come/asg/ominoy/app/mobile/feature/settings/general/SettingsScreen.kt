@@ -277,6 +277,7 @@ private fun SettingsCategoryGroup(content: @Composable ColumnScope.() -> Unit) {
         shape = RoundedCornerShape(24.dp),
         color = HomeColors.CardVariant.copy(alpha = .96f),
         border = BorderStroke(1.dp, HomeColors.Line),
+        tonalElevation = 2.dp,
     ) {
         Column(content = content)
     }

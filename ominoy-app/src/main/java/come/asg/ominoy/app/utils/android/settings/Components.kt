@@ -22,6 +22,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.alorma.compose.settings.storage.base.SettingValueState
 import com.alorma.compose.settings.ui.SettingsMenuLink
@@ -39,7 +40,7 @@ fun OminoySettingsPage(
             modifier
                 .fillMaxWidth()
                 .verticalScroll(rememberScrollState())
-                .background(Color.Black)
+                .background(MaterialTheme.colorScheme.background)
                 .padding(top = 12.dp, bottom = 132.dp),
         verticalArrangement = Arrangement.spacedBy(14.dp),
     ) {
@@ -96,7 +97,7 @@ fun OminoySettingsGroup(
     title: @Composable (() -> Unit)? = null,
     content: @Composable ColumnScope.() -> Unit,
 ) {
-    Surface(color = Color.Black) {
+    Surface(color = MaterialTheme.colorScheme.background) {
         Column(
             modifier = modifier.fillMaxWidth(),
         ) {
@@ -114,7 +115,7 @@ fun OminoyCardSettingsGroup(
     title: @Composable (() -> Unit)? = null,
     content: @Composable ColumnScope.() -> Unit,
 ) {
-    Surface(color = Color.Black) {
+    Surface(color = MaterialTheme.colorScheme.background) {
         Column(
             modifier =
                 modifier
@@ -182,11 +183,15 @@ private fun SettingsGroupTitleSmall(title: @Composable () -> Unit) {
             Modifier
                 .fillMaxWidth()
                 .wrapContentHeight()
-                .padding(16.dp),
+                .background(MaterialTheme.colorScheme.surface.copy(alpha = 0.34f))
+                .padding(horizontal = 18.dp, vertical = 14.dp),
         contentAlignment = Alignment.CenterStart,
     ) {
-        val primary = MaterialTheme.colorScheme.primary
-        val titleStyle = MaterialTheme.typography.labelLarge.copy(color = primary)
+        val titleStyle =
+            MaterialTheme.typography.titleMedium.copy(
+                color = MaterialTheme.colorScheme.onSurface,
+                fontWeight = FontWeight.SemiBold,
+            )
         ProvideTextStyle(value = titleStyle) { title() }
     }
 }
@@ -196,10 +201,17 @@ private fun ominoySettingsColor(enabled: Boolean): ListItemColors {
     val defaultColors = ListItemDefaults.colors()
 
     if (enabled) {
-        return defaultColors
+        return ListItemDefaults.colors(
+            containerColor = Color.Transparent,
+            headlineColor = defaultColors.headlineColor,
+            leadingIconColor = defaultColors.leadingIconColor,
+            trailingIconColor = defaultColors.trailingIconColor,
+            supportingColor = defaultColors.supportingTextColor,
+        )
     }
 
     return ListItemDefaults.colors(
+        containerColor = Color.Transparent,
         headlineColor = defaultColors.disabledHeadlineColor,
         leadingIconColor = defaultColors.disabledLeadingIconColor,
         trailingIconColor = defaultColors.disabledTrailingIconColor,

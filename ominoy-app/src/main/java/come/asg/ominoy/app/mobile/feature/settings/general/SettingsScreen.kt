@@ -1,6 +1,7 @@
 package come.asg.ominoy.app.mobile.feature.settings.general
 
 import android.net.Uri
+import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -75,6 +76,10 @@ fun SettingsScreen(
     val indexingInProgress = viewModel.indexingInProgress.collectAsState(false).value
     val retroAchievementsAccount by RetroAchievementsAccountBridge.credentials.collectAsState()
     var selectedSection by rememberSaveable { mutableStateOf<String?>(null) }
+
+    BackHandler(enabled = selectedSection != null) {
+        selectedSection = null
+    }
 
     if (selectedSection == null) {
         SettingsOverview(

@@ -335,29 +335,32 @@ private fun SettingsDetailHeader(
     onBack: () -> Unit,
 ) {
     Row(
-        Modifier.fillMaxWidth().statusBarsPadding().padding(horizontal = 16.dp),
+        Modifier
+            .fillMaxWidth()
+            .statusBarsPadding()
+            .padding(horizontal = 18.dp, vertical = 4.dp),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(12.dp),
     ) {
         Box(
             Modifier
-                .size(42.dp)
+                .size(40.dp)
                 .clip(CircleShape)
                 .background(HomeColors.SurfaceVariant)
                 .clickable(onClick = onBack),
             contentAlignment = Alignment.Center,
         ) {
-            Text("‹", color = HomeColors.Text, fontSize = 30.sp, lineHeight = 30.sp)
+            Text("←", color = HomeColors.Text, fontSize = 22.sp, lineHeight = 22.sp)
         }
-        Column {
+        Column(verticalArrangement = Arrangement.spacedBy(1.dp)) {
             Text(
-                "SETTINGS",
+                "SETTINGS  /  DETAIL",
                 color = HomeColors.Muted,
-                fontSize = 9.sp,
-                fontWeight = FontWeight.Bold,
-                letterSpacing = 1.5.sp,
+                fontSize = 8.sp,
+                fontWeight = FontWeight.ExtraBold,
+                letterSpacing = 1.4.sp,
             )
-            Text(title, color = HomeColors.Text, fontSize = 23.sp, fontWeight = FontWeight.ExtraBold)
+            Text(title, color = HomeColors.Text, fontSize = 25.sp, fontWeight = FontWeight.Black, letterSpacing = (-.4).sp)
         }
     }
 }

@@ -40,8 +40,8 @@ fun OminoySettingsPage(
                 .fillMaxWidth()
                 .verticalScroll(rememberScrollState())
                 .background(Color.Black)
-                .padding(top = 20.dp, bottom = 144.dp),
-        verticalArrangement = Arrangement.spacedBy(20.dp),
+                .padding(top = 12.dp, bottom = 132.dp),
+        verticalArrangement = Arrangement.spacedBy(14.dp),
     ) {
         content()
     }
@@ -122,8 +122,8 @@ fun OminoyCardSettingsGroup(
                     .padding(start = 16.dp, end = 16.dp),
         ) {
             OutlinedCard(
-                shape = RoundedCornerShape(28.dp),
-                elevation = CardDefaults.outlinedCardElevation(defaultElevation = 2.dp),
+                shape = RoundedCornerShape(24.dp),
+                elevation = CardDefaults.outlinedCardElevation(defaultElevation = 0.dp),
                 colors =
                     CardDefaults.outlinedCardColors(
                         containerColor = MaterialTheme.colorScheme.surfaceVariant,
@@ -131,7 +131,7 @@ fun OminoyCardSettingsGroup(
                 border =
                     androidx.compose.foundation.BorderStroke(
                         1.dp,
-                        MaterialTheme.colorScheme.outlineVariant,
+                        MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.72f),
                     ),
             ) {
                 if (title != null) {

@@ -85,6 +85,7 @@ fun SettingsScreen(
         SettingsOverview(
             modifier = modifier,
             onOpenRetroAchievements = { navController.navigateToRoute(MainRoute.SETTINGS_RETROACHIEVEMENTS) },
+            onOpenAdvanced = { navController.navigateToRoute(MainRoute.SETTINGS_ADVANCED) },
             onOpenSection = { selectedSection = it },
             retroAchievementsUsername = retroAchievementsAccount?.username,
         )
@@ -102,11 +103,6 @@ fun SettingsScreen(
                 "General" -> GeneralSettings(navController = navController)
                 "Display" -> DisplaySettings(navController = navController)
                 "Input" -> InputSettings(navController = navController)
-                "Advanced" ->
-                    MiscSettings(
-                        isSaveSyncSupported = state.isSaveSyncSupported,
-                        navController = navController,
-                    )
             }
         }
     }
@@ -116,6 +112,7 @@ fun SettingsScreen(
 private fun SettingsOverview(
     modifier: Modifier,
     onOpenRetroAchievements: () -> Unit,
+    onOpenAdvanced: () -> Unit,
     onOpenSection: (String) -> Unit,
     retroAchievementsUsername: String?,
 ) {
@@ -199,7 +196,7 @@ private fun SettingsOverview(
                     SettingsCategoryRow(
                         "Advanced",
                         "Storage, diagnostics and power-user options",
-                    ) { onOpenSection("Advanced") }
+                    ) { onOpenAdvanced() }
                 }
             }
             Text(
@@ -362,27 +359,6 @@ private fun SettingsDetailHeader(
             )
             Text(title, color = HomeColors.Text, fontSize = 25.sp, fontWeight = FontWeight.Black, letterSpacing = (-.4).sp)
         }
-    }
-}
-
-@Composable
-private fun MiscSettings(
-    isSaveSyncSupported: Boolean,
-    navController: NavController,
-) {
-    OminoyCardSettingsGroup(title = { Text(text = stringResource(id = R.string.settings_category_misc)) }) {
-        if (isSaveSyncSupported) {
-            OminoySettingsMenuLink(
-                title = { Text(text = stringResource(id = R.string.settings_title_save_sync)) },
-                subtitle = { Text(text = stringResource(id = R.string.settings_description_save_sync)) },
-                onClick = { navController.navigateToRoute(MainRoute.SETTINGS_SAVE_SYNC) },
-            )
-        }
-        OminoySettingsMenuLink(
-            title = { Text(text = stringResource(id = R.string.settings_title_advanced_settings)) },
-            subtitle = { Text(text = stringResource(id = R.string.settings_description_advanced_settings)) },
-            onClick = { navController.navigateToRoute(MainRoute.SETTINGS_ADVANCED) },
-        )
     }
 }
 

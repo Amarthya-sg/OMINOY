@@ -152,8 +152,8 @@ private fun SettingsOverview(
                     .fillMaxSize()
                     .verticalScroll(
                         rememberScrollState(),
-                    ).padding(start = 18.dp, end = 18.dp, top = 40.dp, bottom = 144.dp),
-            verticalArrangement = Arrangement.spacedBy(16.dp),
+                    ).padding(start = 18.dp, end = 18.dp, top = 28.dp, bottom = 132.dp),
+            verticalArrangement = Arrangement.spacedBy(13.dp),
         ) {
             Column(Modifier.padding(horizontal = 4.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
                 Text(
@@ -166,12 +166,12 @@ private fun SettingsOverview(
                 Text(
                     "Settings",
                     color = HomeColors.Text,
-                    fontSize = 34.sp,
-                    lineHeight = 38.sp,
+                    fontSize = 32.sp,
+                    lineHeight = 36.sp,
                     fontWeight = FontWeight.Black,
-                    letterSpacing = (-1.2).sp,
+                    letterSpacing = (-1.1).sp,
                 )
-                Text("Tune your library, controls, and game experience.", color = HomeColors.Muted, fontSize = 14.sp)
+                Text("Tune your library, controls, and game experience.", color = HomeColors.Muted, fontSize = 13.sp)
             }
             SettingsFeatureCard(
                 title = "RetroAchievements",
@@ -181,7 +181,7 @@ private fun SettingsOverview(
                 connected = retroAchievementsUsername != null,
                 onClick = onOpenRetroAchievements,
             )
-            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            Column(verticalArrangement = Arrangement.spacedBy(7.dp)) {
                 SettingsSectionLabel("YOUR SETUP")
                 SettingsCategoryGroup {
                     SettingsCategoryRow("Library", "ROMs, save files and folders") { onOpenSection("Library") }
@@ -193,7 +193,7 @@ private fun SettingsOverview(
                     SettingsCategoryRow("Input", "Touch controls and gamepads") { onOpenSection("Input") }
                 }
             }
-            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            Column(verticalArrangement = Arrangement.spacedBy(7.dp)) {
                 SettingsSectionLabel("MORE")
                 SettingsCategoryGroup {
                     SettingsCategoryRow(
@@ -227,7 +227,7 @@ private fun SettingsFeatureCard(
             .clip(RoundedCornerShape(26.dp))
             .background(Brush.linearGradient(listOf(Color(0xFF2A1F45), Color(0xFF201A2B), Color(0xFF0F3A3D))))
             .clickable(onClick = onClick)
-            .padding(18.dp),
+            .padding(horizontal = 16.dp, vertical = 15.dp),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(14.dp),
     ) {
@@ -292,15 +292,29 @@ private fun SettingsCategoryRow(
     onClick: () -> Unit,
 ) {
     Row(
-        Modifier.fillMaxWidth().clickable(onClick = onClick).padding(horizontal = 14.dp, vertical = 13.dp),
+        Modifier.fillMaxWidth().clickable(onClick = onClick).padding(horizontal = 16.dp, vertical = 11.dp),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(12.dp),
     ) {
+        Box(
+            Modifier
+                .size(width = 4.dp, height = 34.dp)
+                .clip(RoundedCornerShape(99.dp))
+                .background(
+                    when (title) {
+                        "Library" -> HomeColors.Mint
+                        "General" -> Color(0xFFB79CFF)
+                        "Display" -> Color(0xFFFFB86B)
+                        "Input" -> Color(0xFF72C8FF)
+                        else -> Color(0xFFF18BB5)
+                    },
+                ),
+        )
         Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
-            Text(title, color = HomeColors.Text, fontSize = 14.sp, fontWeight = FontWeight.Bold)
-            Text(subtitle, color = HomeColors.Muted, fontSize = 11.sp, lineHeight = 14.sp)
+            Text(title, color = HomeColors.Text, fontSize = 15.sp, fontWeight = FontWeight.Bold)
+            Text(subtitle, color = HomeColors.Muted, fontSize = 12.sp, lineHeight = 15.sp)
         }
-        Text("›", color = HomeColors.Muted, fontSize = 24.sp)
+        Text("›", color = HomeColors.Text.copy(alpha = .62f), fontSize = 24.sp)
     }
 }
 

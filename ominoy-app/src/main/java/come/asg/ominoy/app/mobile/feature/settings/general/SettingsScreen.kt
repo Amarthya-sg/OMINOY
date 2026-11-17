@@ -5,6 +5,7 @@ import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -17,6 +18,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
@@ -76,6 +78,8 @@ fun SettingsScreen(
     val indexingInProgress = viewModel.indexingInProgress.collectAsState(false).value
     val retroAchievementsAccount by RetroAchievementsAccountBridge.credentials.collectAsState()
     var selectedSection by rememberSaveable { mutableStateOf<String?>(null) }
+    var searchQuery by rememberSaveable { mutableStateOf("") }
+    var selectedFilter by rememberSaveable { mutableStateOf("All") }
 
     BackHandler(enabled = selectedSection != null) {
         selectedSection = null
@@ -86,8 +90,13 @@ fun SettingsScreen(
             modifier = modifier,
             onOpenRetroAchievements = { navController.navigateToRoute(MainRoute.SETTINGS_RETROACHIEVEMENTS) },
             onOpenAdvanced = { navController.navigateToRoute(MainRoute.SETTINGS_ADVANCED) },
+            onOpenCloudSaves = { navController.navigateToRoute(MainRoute.SETTINGS_CLOUD_SAVES) },
             onOpenSection = { selectedSection = it },
             retroAchievementsUsername = retroAchievementsAccount?.username,
+            searchQuery = searchQuery,
+            onSearchQueryChange = { searchQuery = it },
+            selectedFilter = selectedFilter,
+            onFilterChange = { selectedFilter = it },
         )
     } else {
         OminoySettingsPage(modifier = modifier) {
@@ -113,8 +122,13 @@ private fun SettingsOverview(
     modifier: Modifier,
     onOpenRetroAchievements: () -> Unit,
     onOpenAdvanced: () -> Unit,
+    onOpenCloudSaves: () -> Unit,
     onOpenSection: (String) -> Unit,
     retroAchievementsUsername: String?,
+    searchQuery: String,
+    onSearchQueryChange: (String) -> Unit,
+    selectedFilter: String,
+    onFilterChange: (String) -> Unit,
 ) {
     Box(modifier = modifier.fillMaxSize().background(HomeColors.Background)) {
         Box(
@@ -170,33 +184,52 @@ private fun SettingsOverview(
                 )
                 Text("Tune your library, controls, and game experience.", color = HomeColors.Muted, fontSize = 13.sp)
             }
-            SettingsFeatureCard(
-                title = "RetroAchievements",
-                subtitle =
-                    retroAchievementsUsername?.let { "$it · View your achievement progress" }
-                        ?: "Connect your account to track achievements",
-                connected = retroAchievementsUsername != null,
-                onClick = onOpenRetroAchievements,
-            )
-            Column(verticalArrangement = Arrangement.spacedBy(7.dp)) {
-                SettingsSectionLabel("YOUR SETUP")
-                SettingsCategoryGroup {
-                    SettingsCategoryRow("Library", "ROMs, save files and folders") { onOpenSection("Library") }
-                    SettingsRowDivider()
-                    SettingsCategoryRow("General", "Autosave, theme and HD mode") { onOpenSection("General") }
-                    SettingsRowDivider()
-                    SettingsCategoryRow("Display", "Shader filters and viewport") { onOpenSection("Display") }
-                    SettingsRowDivider()
-                    SettingsCategoryRow("Input", "Touch controls and gamepads") { onOpenSection("Input") }
-                }
+            SettingsSearchField(value = searchQuery, onValueChange = onSearchQueryChange)
+            SettingsCategoryFilters(selected = selectedFilter, onSelect = onFilterChange)
+            if (selectedFilter == "All" &&
+                (searchQuery.isBlank() || "retro achievements retroachievements account profile".contains(searchQuery.trim(), ignoreCase = true))
+            ) {
+                SettingsFeatureCard(
+                    title = "RetroAchievements",
+                    subtitle =
+                        retroAchievementsUsername?.let { "$it · View your achievement progress" }
+                            ?: "Connect your account to track achievements",
+                    connected = retroAchievementsUsername != null,
+                    onClick = onOpenRetroAchievements,
+                )
             }
-            Column(verticalArrangement = Arrangement.spacedBy(7.dp)) {
-                SettingsSectionLabel("MORE")
-                SettingsCategoryGroup {
-                    SettingsCategoryRow(
-                        "Advanced",
-                        "Storage, diagnostics and power-user options",
-                    ) { onOpenAdvanced() }
+            if (searchQuery.isBlank() && selectedFilter == "All") QuickSettingsGrid()
+            val categories = listOf(
+                Triple("Library", "ROMs, save files and folders", "roms folder scan games"),
+                Triple("General", "Autosave, theme and HD mode", "autosave theme amoled hd quality audio cache direct load"),
+                Triple("Display", "Shader filters and viewport", "shader filter viewport alignment"),
+                Triple("Input", "Touch controls and gamepads", "touch feedback layout editor gamepads rumble tilt"),
+                Triple("Cloud Saves", "Cloud save syncing · Coming soon", "cloud save sync backup"),
+                Triple("Advanced", "Storage, diagnostics and power-user options", "advanced storage diagnostics reset crash core bios"),
+            )
+            val visibleCategories = categories.filter { (title, subtitle, keywords) ->
+                (selectedFilter == "All" || selectedFilter == title) &&
+                    (searchQuery.isBlank() || "$title $subtitle $keywords".contains(searchQuery.trim(), ignoreCase = true))
+            }
+            if (visibleCategories.isEmpty()) {
+                Surface(shape = RoundedCornerShape(22.dp), color = HomeColors.CardVariant.copy(alpha = .96f)) {
+                    Text("No settings match “$searchQuery”", color = HomeColors.Muted, modifier = Modifier.fillMaxWidth().padding(24.dp))
+                }
+            } else {
+                Column(verticalArrangement = Arrangement.spacedBy(7.dp)) {
+                    SettingsSectionLabel(if (searchQuery.isBlank()) "YOUR SETTINGS" else "MATCHING SETTINGS")
+                    SettingsCategoryGroup {
+                        visibleCategories.forEachIndexed { index, (title, subtitle, _) ->
+                            SettingsCategoryRow(title, subtitle) {
+                                when (title) {
+                                    "Cloud Saves" -> onOpenCloudSaves()
+                                    "Advanced" -> onOpenAdvanced()
+                                    else -> onOpenSection(title)
+                                }
+                            }
+                            if (index != visibleCategories.lastIndex) SettingsRowDivider()
+                        }
+                    }
                 }
             }
             Text(
@@ -207,6 +240,111 @@ private fun SettingsOverview(
                 modifier = Modifier.fillMaxWidth().padding(top = 4.dp),
                 textAlign = androidx.compose.ui.text.style.TextAlign.Center,
             )
+        }
+    }
+}
+
+@Composable
+private fun SettingsSearchField(value: String, onValueChange: (String) -> Unit) {
+    Surface(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(99.dp),
+        color = HomeColors.SurfaceVariant,
+        border = BorderStroke(1.dp, OminoyLine),
+    ) {
+        Row(
+            Modifier.padding(horizontal = 16.dp, vertical = 13.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(10.dp),
+        ) {
+            Text("⌕", color = HomeColors.Muted, fontSize = 22.sp, lineHeight = 22.sp)
+            BasicTextField(
+                value = value,
+                onValueChange = onValueChange,
+                modifier = Modifier.weight(1f),
+                singleLine = true,
+                textStyle = androidx.compose.ui.text.TextStyle(color = HomeColors.Text, fontSize = 14.sp),
+                decorationBox = { inner ->
+                    if (value.isEmpty()) Text("Search settings", color = HomeColors.Muted, fontSize = 14.sp)
+                    inner()
+                },
+            )
+            if (value.isNotEmpty()) {
+                Text("×", color = HomeColors.Muted, fontSize = 21.sp, modifier = Modifier.clickable { onValueChange("") })
+            }
+        }
+    }
+}
+
+@Composable
+private fun SettingsCategoryFilters(selected: String, onSelect: (String) -> Unit) {
+    Row(
+        Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()),
+        horizontalArrangement = Arrangement.spacedBy(8.dp),
+    ) {
+        listOf("All", "Library", "General", "Display", "Input", "Cloud Saves", "Advanced").forEach { name ->
+            val active = selected == name
+            Surface(
+                modifier = Modifier.clickable { onSelect(name) },
+                shape = RoundedCornerShape(99.dp),
+                color = if (active) OminoyTeal else HomeColors.CardVariant,
+                border = BorderStroke(1.dp, if (active) OminoyTeal else OminoyLine),
+            ) {
+                Text(
+                    name,
+                    color = if (active) Color(0xFF06201D) else HomeColors.Muted,
+                    fontSize = 12.sp,
+                    fontWeight = FontWeight.Bold,
+                    modifier = Modifier.padding(horizontal = 13.dp, vertical = 8.dp),
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun QuickSettingsGrid() {
+    val items = listOf(
+        Triple("AMOLED theme", "Pure black backgrounds", "amoled"),
+        Triple("Autosave", "Save when leaving a game", "autosave"),
+        Triple("HD mode", "Higher-resolution rendering", "hd"),
+        Triple("Immersive mode", "Hide system bars in-game", "immersive"),
+    )
+    Column(verticalArrangement = Arrangement.spacedBy(7.dp)) {
+        SettingsSectionLabel("QUICK SETTINGS")
+        Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+            items.chunked(2).forEach { rowItems ->
+                Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                    rowItems.forEach { (title, _, key) ->
+                        val (prefKey, default) = when (key) {
+                            "amoled" -> R.string.pref_key_amoled_theme to false
+                            "autosave" -> R.string.pref_key_autosave to true
+                            "hd" -> R.string.pref_key_hd_mode to false
+                            else -> R.string.pref_key_enable_immersive_mode to false
+                        }
+                        val state = booleanPreferenceState(prefKey, default)
+                        Surface(
+                            modifier = Modifier.weight(1f).height(106.dp).clickable { state.value = !state.value },
+                            shape = RoundedCornerShape(20.dp),
+                            color = if (state.value) Color(0xFF17312F) else HomeColors.CardVariant,
+                            border = BorderStroke(1.dp, if (state.value) OminoyTeal.copy(alpha = .48f) else OminoyLine),
+                        ) {
+                            Column(Modifier.padding(13.dp), verticalArrangement = Arrangement.SpaceBetween) {
+                                Text(
+                                    when (key) { "amoled" -> "●"; "autosave" -> "↺"; "hd" -> "✦"; else -> "◐" },
+                                    color = OminoyTeal,
+                                    fontSize = 19.sp,
+                                )
+                                Column {
+                                    Text(title, color = HomeColors.Text, fontSize = 13.sp, fontWeight = FontWeight.Bold)
+                                    Text(if (state.value) "On" else "Off", color = HomeColors.Muted, fontSize = 11.sp)
+                                }
+                            }
+                        }
+                    }
+                    if (rowItems.size == 1) androidx.compose.foundation.layout.Spacer(Modifier.weight(1f))
+                }
+            }
         }
     }
 }

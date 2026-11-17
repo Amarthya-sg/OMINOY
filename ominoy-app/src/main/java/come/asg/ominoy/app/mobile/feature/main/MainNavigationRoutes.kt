@@ -131,6 +131,12 @@ enum class MainRoute(
         parent = SETTINGS,
         showBottomNavigation = false,
     ),
+    SETTINGS_CLOUD_SAVES(
+        route = "settings/cloud-saves",
+        titleId = R.string.settings_title_save_sync,
+        parent = SETTINGS,
+        showBottomNavigation = false,
+    ),
     SETTINGS_RETROACHIEVEMENTS(
         route = "settings/retroachievements",
         titleId = R.string.settings_title_retroachievements,

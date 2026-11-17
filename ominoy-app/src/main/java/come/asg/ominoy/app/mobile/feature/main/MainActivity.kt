@@ -58,6 +58,7 @@ import come.asg.ominoy.app.mobile.feature.settings.bios.BiosScreen
 import come.asg.ominoy.app.mobile.feature.settings.bios.BiosSettingsViewModel
 import come.asg.ominoy.app.mobile.feature.settings.coreselection.CoresSelectionScreen
 import come.asg.ominoy.app.mobile.feature.settings.coreselection.CoresSelectionViewModel
+import come.asg.ominoy.app.mobile.feature.settings.cloudsaves.CloudSavesComingSoonScreen
 import come.asg.ominoy.app.mobile.feature.settings.general.SettingsScreen
 import come.asg.ominoy.app.mobile.feature.settings.general.SettingsViewModel
 import come.asg.ominoy.app.mobile.feature.settings.general.ViewportAlignmentScreen
@@ -417,6 +418,9 @@ class MainActivity :
                                             ),
                                     ),
                             )
+                        }
+                        composable(MainRoute.SETTINGS_CLOUD_SAVES) {
+                            CloudSavesComingSoonScreen(modifier = Modifier.padding(padding))
                         }
                         composable(MainRoute.SETTINGS_RETROACHIEVEMENTS) {
                             RetroAchievementsScreen(

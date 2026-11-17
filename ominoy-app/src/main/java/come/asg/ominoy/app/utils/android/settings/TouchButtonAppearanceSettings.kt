@@ -91,6 +91,33 @@ fun TouchButtonAppearanceSettings() {
 }
 
 @Composable
+fun TouchButtonAppearanceColorSettings() {
+    val appearance =
+        indexPreferenceState(
+            R.string.pref_key_touch_button_appearance,
+            "classic",
+            stringListResource(R.array.pref_key_touch_button_appearance_values),
+        )
+    val red = intPreferenceState(stringResource(R.string.pref_key_touch_button_red), 120)
+    val green = intPreferenceState(stringResource(R.string.pref_key_touch_button_green), 175)
+    val blue = intPreferenceState(stringResource(R.string.pref_key_touch_button_blue), 255)
+    val opacity = intPreferenceState(stringResource(R.string.pref_key_touch_button_opacity), 75)
+    if (appearance.value == 3) {
+        val selectedColor = Color(red.value / 255f, green.value / 255f, blue.value / 255f)
+        CustomColorPickerCard(
+            color = selectedColor,
+            opacity = opacity.value,
+            onColorChanged = { color ->
+                red.value = (color.red * 255f).toInt()
+                green.value = (color.green * 255f).toInt()
+                blue.value = (color.blue * 255f).toInt()
+            },
+            onOpacityChanged = { opacity.value = it },
+        )
+    }
+}
+
+@Composable
 private fun CustomColorPickerCard(
     color: Color,
     opacity: Int,

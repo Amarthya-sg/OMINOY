@@ -52,7 +52,6 @@ import come.asg.ominoy.app.mobile.feature.library.LibraryScreen
 import come.asg.ominoy.app.mobile.feature.library.LibraryViewModel
 import come.asg.ominoy.app.mobile.feature.search.SearchScreen
 import come.asg.ominoy.app.mobile.feature.search.SearchViewModel
-import come.asg.ominoy.app.mobile.feature.settings.advanced.AdvancedSettingsScreen
 import come.asg.ominoy.app.mobile.feature.settings.advanced.AdvancedSettingsViewModel
 import come.asg.ominoy.app.mobile.feature.settings.bios.BiosScreen
 import come.asg.ominoy.app.mobile.feature.settings.bios.BiosSettingsViewModel
@@ -325,19 +324,12 @@ class MainActivity :
                                                 ),
                                             ),
                                     ),
-                                navController = navController,
-                            )
-                        }
-                        composable(MainRoute.SETTINGS_ADVANCED) {
-                            AdvancedSettingsScreen(
-                                modifier = Modifier.padding(padding),
-                                viewModel =
+                                advancedViewModel =
                                     viewModel(
-                                        factory =
-                                            AdvancedSettingsViewModel.Factory(
-                                                applicationContext,
-                                                settingsInteractor,
-                                            ),
+                                        factory = AdvancedSettingsViewModel.Factory(
+                                            applicationContext,
+                                            settingsInteractor,
+                                        ),
                                     ),
                                 navController = navController,
                             )

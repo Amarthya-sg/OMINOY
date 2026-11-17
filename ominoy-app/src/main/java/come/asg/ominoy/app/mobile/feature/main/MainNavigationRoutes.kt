@@ -89,12 +89,6 @@ enum class MainRoute(
         titleId = R.string.title_settings,
         showBottomNavigation = true,
     ),
-    SETTINGS_ADVANCED(
-        route = "settings/advanced",
-        titleId = R.string.settings_title_advanced_settings,
-        parent = SETTINGS,
-        showBottomNavigation = false,
-    ),
     SETTINGS_BIOS(
         route = "settings/bios",
         titleId = R.string.settings_title_display_bios_info,
